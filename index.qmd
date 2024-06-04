@@ -13,9 +13,7 @@ execute:
 ```{r}
 #| output: false
 library(tidyverse)
-library(ggformula)
 library(janitor)
-library(skimr)
 library(broom)
 library(readxl)
 library(jsonlite)
@@ -64,7 +62,7 @@ ago
 Genes from Open Targets:
 
 ```{r}
-ot <- read_tsv("OT-MONDO_0004975-associated-targets-5_4_2024-v24_03.tsv", show_col_types = FALSE, na = "No data")
+ot <- read_tsv("OT-MONDO_0004975-associated-targets-6_4_2024-v24_03.tsv", show_col_types = FALSE, na = "No data")
 
 ot
 ```
