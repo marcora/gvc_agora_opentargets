@@ -1,5 +1,5 @@
 ---
-title: "gvc_opentargets"
+title: "gvc_agora_opentargets"
 format:
   html:
     df-print: paged
@@ -20,6 +20,8 @@ library(broom)
 library(readxl)
 library(jsonlite)
 
+library(gprofiler2)
+
 theme_set(theme_bw())
 
 set.seed(666)
@@ -27,7 +29,9 @@ set.seed(666)
 
 ## Read and prep data
 
-Genes within 1Mb window of GVC loci:
+### GVC
+
+Genes within 1Mb window of (each side of?) GVC loci:
 
 ```{r}
 gvc <- read_xlsx("GVC_1Mb_comparison_050224.xlsx") |>
@@ -38,37 +42,34 @@ gvc <- read_xlsx("GVC_1Mb_comparison_050224.xlsx") |>
 gvc
 ```
 
-Gene prioritization scores from Agora <https://www.synapse.org/Synapse:syn25741025>:
+```{r}
+gvc.genes <- gvc |> distinct(gene_id, .keep_all = TRUE) |> select(gene_id, gene_symbol) |> arrange(gene_symbol)
+
+gvc.genes
+```
+
+### Agora
+
+Gene prioritization scores from [Agora](https://www.synapse.org/Synapse:syn25741025):
 
 ```{r}
+
 ago <- read_json("syn25741025.overall_scores.json", simplifyVector = TRUE) |> as_tibble()
 
 ago
 ```
 
-```{r}
-sum(gvc$gene_id %in% ago$ensembl_gene_id)
-```
-
-```{r}
-sum(gvc$gene_symbol %in% ago$hgnc_symbol)
-```
+### Open Targets
 
 Genes from Open Targets:
 
 ```{r}
-ot <- read_tsv("OT-MONDO_0004975-associated-targets-5_4_2024-v24_03.tsv", show_col_types = FALSE)
+ot <- read_tsv("OT-MONDO_0004975-associated-targets-5_4_2024-v24_03.tsv", show_col_types = FALSE, na = "No data")
 
 ot
 ```
 
-```{r}
-sum(ot$symbol %notin% ago$hgnc_symbol)
-```
-
-```{r}
-library(gprofiler2)
-```
+Add Ensembl Gene IDs (WTF!):
 
 ```{r}
 otcols <- colnames(ot)
@@ -85,22 +86,31 @@ otensg <- gconvert(
 otensg
 ```
 
+## Annotate GVC genes with Agora and Open Targets scores
+
 ```{r}
-d <- gvc |>
+sum(gvc.genes$gene_id %in% ago$ensembl_gene_id)
+```
+
+```{r}
+sum(gvc.genes$gene_id %in% otensg$ensembl_gene_id)
+```
+
+Arrange by Agora's `genetics_score` and Open Targets' `otGeneticsPortal`:
+
+```{r}
+d <- gvc.genes |>
   left_join(ago, by = join_by(gene_id == ensembl_gene_id)) |> 
   left_join(otensg, by = join_by(gene_id == ensembl_gene_id)) |> 
-  arrange(desc(globalScore))
+  arrange(desc(genetics_score), desc(otGeneticsPortal))
 
 d
 ```
 
-```{r}
-skim(d)
-```
+## Perform ORA of GVC genes sorted by Agora and Open Targets genetics scores
 
 ```{r}
-#| eval: false
-query <- ot |> arrange(desc(globalScore)) |> distinct(symbol) |> pull(symbol)
+query <- d |> distinct(symbol) |> pull(symbol)
 
 gostres <- gost(query = query,
                 organism = "hsapiens",
@@ -111,20 +121,37 @@ gostres <- gost(query = query,
                 user_threshold = 0.005,
                 correction_method = "fdr")
 
-gostres$result
+gostres$result |> select(term_name, term_id, source, everything())
 ```
 
 ```{r}
-#| eval: false
 gostplot(gostres, capped = FALSE, interactive = TRUE)
 ```
 
+## Perform correlation analysis of GVC genes using Agora and Open Targets scores
+
 ```{r}
-otensg |>
-  left_join(ago, by = "ensembl_gene_id") |>
-  slice_max(globalScore, n = 100) |>
-  select(ensembl_gene_id, symbol, globalScore, target_risk_score, genetics_score, multi_omics_score) |>
-  drop_na(globalScore, target_risk_score) |>
-  summarize(cor = tidy(cor.test(globalScore, target_risk_score, method="spearman"))) |>
+d |> nrow()
+
+d |> drop_na(genetics_score, otGeneticsPortal) |> nrow()
+
+d |> drop_na(genetics_score, otGeneticsPortal) |>
+  summarize(cor = tidy(cor.test(genetics_score, otGeneticsPortal, method="kendall"))) |>
   unnest(cor)
+```
+
+```{r}
+d |> nrow()
+
+d |> drop_na(target_risk_score, globalScore) |> nrow()
+
+d |> drop_na(target_risk_score, globalScore) |>
+  summarize(cor = tidy(cor.test(target_risk_score, globalScore, method="kendall"))) |>
+  unnest(cor)
+```
+
+## Print environment
+
+```{r}
+sessioninfo::session_info()
 ```
