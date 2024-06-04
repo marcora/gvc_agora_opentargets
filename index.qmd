@@ -59,7 +59,7 @@ ago
 
 ### Open Targets
 
-Genes from Open Targets:
+Genes from [Open Targets](https://platform.opentargets.org/disease/MONDO_0004975/associations):
 
 ```{r}
 ot <- read_tsv("OT-MONDO_0004975-associated-targets-6_4_2024-v24_03.tsv", show_col_types = FALSE, na = "No data")
