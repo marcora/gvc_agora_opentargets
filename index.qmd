@@ -96,18 +96,18 @@ sum(gvc.genes$gene_id %in% otensg$ensembl_gene_id)
 Arrange by Agora's `genetics_score` and Open Targets' `otGeneticsPortal`:
 
 ```{r}
-d <- gvc.genes |>
+d1 <- gvc.genes |>
   left_join(ago, by = join_by(gene_id == ensembl_gene_id)) |> 
   left_join(otensg, by = join_by(gene_id == ensembl_gene_id)) |> 
   arrange(desc(genetics_score), desc(otGeneticsPortal))
 
-d
+d1
 ```
 
 ## Perform ORA of GVC genes sorted by Agora and Open Targets genetics scores
 
 ```{r}
-query <- d |> distinct(symbol) |> pull(symbol)
+query <- d1 |> distinct(symbol) |> pull(symbol)
 
 gostres <- gost(query = query,
                 organism = "hsapiens",
@@ -128,21 +128,51 @@ gostplot(gostres, capped = FALSE, interactive = TRUE)
 ## Perform correlation analysis of GVC genes using Agora and Open Targets scores
 
 ```{r}
-d |> nrow()
+d1 |> nrow()
 
-d |> drop_na(genetics_score, otGeneticsPortal) |> nrow()
+d1 |> drop_na(genetics_score, otGeneticsPortal) |> nrow()
 
-d |> drop_na(genetics_score, otGeneticsPortal) |>
+d1 |> drop_na(genetics_score, otGeneticsPortal) |>
   summarize(cor = tidy(cor.test(genetics_score, otGeneticsPortal, method="kendall"))) |>
   unnest(cor)
 ```
 
 ```{r}
-d |> nrow()
+d1 |> nrow()
 
-d |> drop_na(target_risk_score, globalScore) |> nrow()
+d1 |> drop_na(target_risk_score, globalScore) |> nrow()
 
-d |> drop_na(target_risk_score, globalScore) |>
+d1 |> drop_na(target_risk_score, globalScore) |>
+  summarize(cor = tidy(cor.test(target_risk_score, globalScore, method="kendall"))) |>
+  unnest(cor)
+```
+
+## Overall correlation between Agora and Open Targets
+
+```{r}
+d2 <- ago |> 
+  left_join(otensg, by = "ensembl_gene_id") |> 
+  arrange(desc(genetics_score), desc(otGeneticsPortal))
+
+d2
+```
+
+```{r}
+d2 |> nrow()
+
+d2 |> drop_na(genetics_score, otGeneticsPortal) |> nrow()
+
+d2 |> drop_na(genetics_score, otGeneticsPortal) |>
+  summarize(cor = tidy(cor.test(genetics_score, otGeneticsPortal, method="kendall"))) |>
+  unnest(cor)
+```
+
+```{r}
+d2 |> nrow()
+
+d2 |> drop_na(target_risk_score, globalScore) |> nrow()
+
+d2 |> drop_na(target_risk_score, globalScore) |>
   summarize(cor = tidy(cor.test(target_risk_score, globalScore, method="kendall"))) |>
   unnest(cor)
 ```
