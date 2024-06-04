@@ -1,0 +1,130 @@
+---
+title: "gvc_opentargets"
+format:
+  html:
+    df-print: paged
+    toc: true
+execute: 
+  warning: false
+---
+
+## Setup environment
+
+```{r}
+#| output: false
+library(tidyverse)
+library(ggformula)
+library(janitor)
+library(skimr)
+library(broom)
+library(readxl)
+library(jsonlite)
+
+theme_set(theme_bw())
+
+set.seed(666)
+```
+
+## Read and prep data
+
+Genes within 1Mb window of GVC loci:
+
+```{r}
+gvc <- read_xlsx("GVC_1Mb_comparison_050224.xlsx") |>
+  clean_names() |> 
+  separate(gene_id, c("gene_id", "version")) |>
+  select(-version, -agora_nominated_list, -opentarget_info)
+
+gvc
+```
+
+Gene prioritization scores from Agora <https://www.synapse.org/Synapse:syn25741025>:
+
+```{r}
+ago <- read_json("syn25741025.overall_scores.json", simplifyVector = TRUE) |> as_tibble()
+
+ago
+```
+
+```{r}
+sum(gvc$gene_id %in% ago$ensembl_gene_id)
+```
+
+```{r}
+sum(gvc$gene_symbol %in% ago$hgnc_symbol)
+```
+
+Genes from Open Targets:
+
+```{r}
+ot <- read_tsv("OT-MONDO_0004975-associated-targets-5_4_2024-v24_03.tsv", show_col_types = FALSE)
+
+ot
+```
+
+```{r}
+sum(ot$symbol %notin% ago$hgnc_symbol)
+```
+
+```{r}
+library(gprofiler2)
+```
+
+```{r}
+otcols <- colnames(ot)
+otensg <- gconvert(
+  query = ot$symbol,
+  organism = "hsapiens",
+  target= "ENSG",
+  mthreshold = Inf,
+  filter_na = TRUE) |> 
+  mutate(input_number = as.character(input_number)) |>
+  left_join(ot |> rownames_to_column(var = "input_number"), by = "input_number") |> 
+  select(ensembl_gene_id = target, otcols)
+
+otensg
+```
+
+```{r}
+d <- gvc |>
+  left_join(ago, by = join_by(gene_id == ensembl_gene_id)) |> 
+  left_join(otensg, by = join_by(gene_id == ensembl_gene_id)) |> 
+  arrange(desc(globalScore))
+
+d
+```
+
+```{r}
+skim(d)
+```
+
+```{r}
+#| eval: false
+query <- ot |> arrange(desc(globalScore)) |> distinct(symbol) |> pull(symbol)
+
+gostres <- gost(query = query,
+                organism = "hsapiens",
+                domain_scope = "annotated",
+                exclude_iea = TRUE,
+                ordered_query = TRUE,
+                significant = TRUE,
+                user_threshold = 0.005,
+                correction_method = "fdr")
+
+gostres$result
+```
+
+```{r}
+#| eval: false
+gostplot(gostres, capped = FALSE, interactive = TRUE)
+```
+
+```{r}
+otensg |>
+  left_join(ago, by = "ensembl_gene_id") |>
+  slice_max(globalScore, n = 100) |>
+  select(ensembl_gene_id, symbol, globalScore, target_risk_score, genetics_score, multi_omics_score) |>
+  drop_na(globalScore, target_risk_score) |>
+  summarize(cor = tidy(cor.test(globalScore, target_risk_score, method="spearman"))) |>
+  unnest(cor)
+```
