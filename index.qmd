@@ -29,7 +29,7 @@ set.seed(666)
 
 ### GVC
 
-Genes within 1Mb window of (each side of?) GVC loci:
+Genes within 1Mb window of (each side of?) GVC loci from Fanny:
 
 ```{r}
 gvc <- read_xlsx("GVC_1Mb_comparison_050224.xlsx") |>
@@ -48,10 +48,9 @@ gvc.genes
 
 ### Agora
 
-Gene prioritization scores from [Agora](https://www.synapse.org/Synapse:syn25741025):
+Alzheimer's disease gene prioritization scores from [Agora](https://www.synapse.org/Synapse:syn25741025):
 
 ```{r}
-
 ago <- read_json("syn25741025.overall_scores.json", simplifyVector = TRUE) |> as_tibble()
 
 ago
@@ -59,7 +58,7 @@ ago
 
 ### Open Targets
 
-Genes from [Open Targets](https://platform.opentargets.org/disease/MONDO_0004975/associations):
+Alzheimer's disease gene prioritization scores from [Open Targets](https://platform.opentargets.org/disease/MONDO_0004975/associations):
 
 ```{r}
 ot <- read_tsv("OT-MONDO_0004975-associated-targets-6_4_2024-v24_03.tsv", show_col_types = FALSE, na = "No data")
