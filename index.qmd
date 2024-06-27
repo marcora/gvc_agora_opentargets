@@ -146,8 +146,10 @@ p
 overlap.genes <- p |>
   unnest(..values..) |>
   filter(..set.. == "GVC∩Agora∩Open Targets") |> 
-  select(gene_id = ..values..) |> 
-  left_join(gvc.genes, by = "gene_id")
+  select(gene_id = ..values..) |>
+  left_join(ago, by = join_by(gene_id == ensembl_gene_id)) |> 
+  left_join(otensg, by = join_by(gene_id == ensembl_gene_id)) |> 
+  arrange(desc(genetics_score), desc(otGeneticsPortal))
 
 overlap.genes
 ```
@@ -155,7 +157,7 @@ overlap.genes
 ## Perform ORA of overlap genes
 
 ```{r}
-query <- overlap.genes |> distinct(gene_symbol) |> pull(gene_symbol)
+query <- overlap.genes |> distinct(symbol) |> pull(symbol)
 
 gostres <- gost(query = query,
                 organism = "hsapiens",
