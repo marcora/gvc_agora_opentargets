@@ -121,7 +121,7 @@ d1
 x = list(
   "GVC" = gvc.genes$gene_id,
   "Agora" = ago$ensembl_gene_id,
-  "Open Targets" = otensg$ensembl_gene_id
+  "OpenTargets" = otensg$ensembl_gene_id
 )
 ```
 
@@ -145,7 +145,7 @@ p
 ```{r}
 overlap.genes <- p |>
   unnest(..values..) |>
-  filter(..set.. == "GVC∩Agora∩Open Targets") |> 
+  filter(..set.. == "GVC∩Agora∩OpenTargets") |> 
   select(gene_id = ..values..) |>
   left_join(ago, by = join_by(gene_id == ensembl_gene_id)) |> 
   left_join(otensg, by = join_by(gene_id == ensembl_gene_id)) |> 
@@ -245,6 +245,16 @@ d2 |> drop_na(target_risk_score, globalScore) |> nrow()
 
 d2 |> drop_na(target_risk_score, globalScore) |>
   summarize(cor = tidy(cor.test(target_risk_score, globalScore, method="kendall"))) |>
+  unnest(cor)
+```
+
+```{r}
+overlap.genes |> nrow()
+
+overlap.genes |> drop_na(genetics_score, otGeneticsPortal) |> nrow()
+
+overlap.genes |> drop_na(genetics_score, otGeneticsPortal) |>
+  summarize(cor = tidy(cor.test(genetics_score, otGeneticsPortal, method="kendall"))) |>
   unnest(cor)
 ```
 
