@@ -1,0 +1,6 @@
+INFO [2024-06-27 11:33:21] $x
+INFO [2024-06-27 11:33:21] list(GVC = gvc.genes$gene_id, Agora = ago$ensembl_gene_id, OT = otensg$ensembl_gene_id)
+INFO [2024-06-27 11:33:21] 
+INFO [2024-06-27 11:33:21] $filename
+INFO [2024-06-27 11:33:21] NULL
+INFO [2024-06-27 11:33:21] 

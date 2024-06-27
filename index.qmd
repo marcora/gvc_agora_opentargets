@@ -51,9 +51,20 @@ gvc.genes
 Alzheimer's disease gene prioritization scores from [Agora](https://www.synapse.org/Synapse:syn25741025):
 
 ```{r}
-ago <- read_json("syn25741025.overall_scores.json", simplifyVector = TRUE) |> as_tibble()
+ago1 <- read_json("syn25741025.overall_scores.json", simplifyVector = TRUE) |> as_tibble()
 
-ago
+ago1
+```
+
+Alzheimer's disease genes (Agora) from Fanny:
+
+```{r}
+ago2 <- read_csv("AMPAD_agora_032124_gene-list.csv")
+ago2
+```
+
+```{r}
+ago <- ago1 |> filter(hgnc_symbol %in% ago2$`Gene Symbol`)
 ```
 
 ### Open Targets
@@ -102,6 +113,64 @@ d1 <- gvc.genes |>
   arrange(desc(genetics_score), desc(otGeneticsPortal))
 
 d1
+```
+
+## Overlap between GVC genes and Agora and Open Targets genes
+
+```{r}
+x = list(
+  "GVC" = gvc.genes$gene_id,
+  "Agora" = ago$ensembl_gene_id,
+  "Open Targets" = otensg$ensembl_gene_id
+)
+```
+
+```{r}
+#| fig-width: 6
+#| fig-height: 6
+library(VennDiagram)
+grid.newpage()
+v <- venn.diagram(
+  x,
+  fill = c("#FF0000", "#00FF00", "#0000FF"),
+  filename = NULL)
+grid.draw(v)
+```
+
+```{r}
+p <- get.venn.partitions(x)
+p
+```
+
+```{r}
+overlap.genes <- p |>
+  unnest(..values..) |>
+  filter(..set.. == "GVC∩Agora∩Open Targets") |> 
+  select(gene_id = ..values..) |> 
+  left_join(gvc.genes, by = "gene_id")
+
+overlap.genes
+```
+
+## Perform ORA of overlap genes
+
+```{r}
+query <- overlap.genes |> distinct(gene_symbol) |> pull(gene_symbol)
+
+gostres <- gost(query = query,
+                organism = "hsapiens",
+                domain_scope = "annotated",
+                exclude_iea = TRUE,
+                ordered_query = TRUE,
+                significant = TRUE,
+                user_threshold = 0.005,
+                correction_method = "fdr")
+
+gostres$result |> select(term_name, term_id, source, everything())
+```
+
+```{r}
+gostplot(gostres, capped = FALSE, interactive = TRUE)
 ```
 
 ## Perform ORA of GVC genes sorted by Agora and Open Targets genetics scores
