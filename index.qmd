@@ -371,7 +371,7 @@ gostplot(gostres, capped = FALSE, interactive = TRUE)
 ### Agora
 
 ```{r}
-query <- d1 |> arrange(desc(genetics_score)) |> distinct(symbol) |> pull(symbol)
+query <- d1 |> arrange(desc(genetics_score)) |> distinct(gene_id) |> pull(gene_id)
 
 gostres <- gost(query = query,
                 organism = "hsapiens",
@@ -392,7 +392,7 @@ gostplot(gostres, capped = FALSE, interactive = TRUE)
 ### OpenTargets
 
 ```{r}
-query <- d1 |> arrange(desc(otGeneticsPortal)) |> distinct(symbol) |> pull(symbol)
+query <- d1 |> arrange(desc(otGeneticsPortal)) |> distinct(gene_id) |> pull(gene_id)
 
 gostres <- gost(query = query,
                 organism = "hsapiens",
