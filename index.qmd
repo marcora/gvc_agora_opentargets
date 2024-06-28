@@ -56,7 +56,7 @@ ago1 <- read_json("syn25741025.overall_scores.json", simplifyVector = TRUE) |> a
 ago1
 ```
 
-Alzheimer's disease genes (Agora) from Fanny:
+Alzheimer's disease genes (AMPAD Agora) from Fanny:
 
 ```{r}
 ago2 <- read_csv("AMPAD_agora_032124_gene-list.csv")
@@ -67,9 +67,9 @@ ago2
 ago <- ago1 |> filter(hgnc_symbol %in% ago2$`Gene Symbol`)
 ```
 
-### Open Targets
+### OpenTargets
 
-Alzheimer's disease gene prioritization scores from [Open Targets](https://platform.opentargets.org/disease/MONDO_0004975/associations):
+Alzheimer's disease gene prioritization scores from OpenTargets:
 
 ```{r}
 ot <- read_tsv("OT-MONDO_0004975-associated-targets-6_4_2024-v24_03.tsv", show_col_types = FALSE, na = "No data")
@@ -94,7 +94,7 @@ otensg <- gconvert(
 otensg
 ```
 
-## Annotate GVC genes with Agora and Open Targets scores
+## Annotate GVC genes with Agora and OpenTargets scores
 
 ```{r}
 sum(gvc.genes$gene_id %in% ago$ensembl_gene_id)
@@ -104,7 +104,7 @@ sum(gvc.genes$gene_id %in% ago$ensembl_gene_id)
 sum(gvc.genes$gene_id %in% otensg$ensembl_gene_id)
 ```
 
-Arrange by Agora's `genetics_score` and Open Targets' `otGeneticsPortal`:
+Arrange by Agora's `genetics_score` and OpenTargets' `otGeneticsPortal`:
 
 ```{r}
 d1 <- gvc.genes |>
@@ -115,7 +115,7 @@ d1 <- gvc.genes |>
 d1
 ```
 
-## Overlap between GVC genes and Agora and Open Targets genes
+## Overlap between GVC genes and Agora and OpenTargets genes
 
 ```{r}
 x = list(
@@ -142,23 +142,23 @@ p <- get.venn.partitions(x)
 p
 ```
 
+## Perform ORA of overlap genes
+
+### GVC ∩ Agora ∩ OpenTargets
+
 ```{r}
-overlap.genes <- p |>
+query <- p |> 
+  filter(..set.. == "GVC∩Agora∩OpenTargets") |>
   unnest(..values..) |>
-  filter(..set.. == "GVC∩Agora∩OpenTargets") |> 
   select(gene_id = ..values..) |>
   left_join(ago, by = join_by(gene_id == ensembl_gene_id)) |> 
   left_join(otensg, by = join_by(gene_id == ensembl_gene_id)) |> 
-  arrange(desc(genetics_score), desc(otGeneticsPortal))
-
-overlap.genes
+  arrange(desc(genetics_score), desc(otGeneticsPortal)) |> 
+  distinct(gene_id) |>
+  pull(gene_id)
 ```
 
-## Perform ORA of overlap genes
-
 ```{r}
-query <- overlap.genes |> distinct(symbol) |> pull(symbol)
-
 gostres <- gost(query = query,
                 organism = "hsapiens",
                 domain_scope = "annotated",
@@ -175,7 +175,200 @@ gostres$result |> select(term_name, term_id, source, everything())
 gostplot(gostres, capped = FALSE, interactive = TRUE)
 ```
 
-## Perform ORA of GVC genes sorted by Agora and Open Targets genetics scores
+```{r}
+# save overlap gene ids for later
+overlap_gene_ids <- query
+```
+
+### (Agora ∩ OpenTargets) ∖ (GVC)
+
+```{r}
+query <- p |>
+  filter(..set.. == "(Agora∩OpenTargets)∖(GVC)") |> 
+  unnest(..values..) |>
+  select(gene_id = ..values..) |>
+  left_join(ago, by = join_by(gene_id == ensembl_gene_id)) |> 
+  left_join(otensg, by = join_by(gene_id == ensembl_gene_id)) |> 
+  arrange(desc(genetics_score), desc(otGeneticsPortal)) |> 
+  distinct(gene_id) |>
+  pull(gene_id)
+```
+
+```{r}
+gostres <- gost(query = query,
+                organism = "hsapiens",
+                domain_scope = "annotated",
+                exclude_iea = TRUE,
+                ordered_query = TRUE,
+                significant = TRUE,
+                user_threshold = 0.005,
+                correction_method = "fdr")
+
+gostres$result |> select(term_name, term_id, source, everything())
+```
+
+```{r}
+gostplot(gostres, capped = FALSE, interactive = TRUE)
+```
+
+### (GVC ∩ OpenTargets) ∖ (Agora)
+
+```{r}
+query <- p |>
+  filter(..set.. == "(GVC∩OpenTargets)∖(Agora)") |> 
+  unnest(..values..) |>
+  select(gene_id = ..values..) |>
+  left_join(ago, by = join_by(gene_id == ensembl_gene_id)) |> 
+  left_join(otensg, by = join_by(gene_id == ensembl_gene_id)) |> 
+  arrange(desc(genetics_score), desc(otGeneticsPortal)) |> 
+  distinct(gene_id) |>
+  pull(gene_id)
+```
+
+```{r}
+gostres <- gost(query = query,
+                organism = "hsapiens",
+                domain_scope = "annotated",
+                exclude_iea = TRUE,
+                ordered_query = TRUE,
+                significant = TRUE,
+                user_threshold = 0.005,
+                correction_method = "fdr")
+
+gostres$result |> select(term_name, term_id, source, everything())
+```
+
+```{r}
+gostplot(gostres, capped = FALSE, interactive = TRUE)
+```
+
+### (OpenTargets) ∖ (GVC∪Agora)
+
+```{r}
+query <- p |>
+  filter(..set.. == "(OpenTargets)∖(GVC∪Agora)") |> 
+  unnest(..values..) |>
+  select(gene_id = ..values..) |>
+  left_join(ago, by = join_by(gene_id == ensembl_gene_id)) |> 
+  left_join(otensg, by = join_by(gene_id == ensembl_gene_id)) |> 
+  arrange(desc(genetics_score), desc(otGeneticsPortal)) |> 
+  distinct(gene_id) |>
+  pull(gene_id)
+```
+
+```{r}
+gostres <- gost(query = query,
+                organism = "hsapiens",
+                domain_scope = "annotated",
+                exclude_iea = TRUE,
+                ordered_query = TRUE,
+                significant = TRUE,
+                user_threshold = 0.005,
+                correction_method = "fdr")
+
+gostres$result |> select(term_name, term_id, source, everything())
+```
+
+```{r}
+gostplot(gostres, capped = FALSE, interactive = TRUE)
+```
+
+### (GVC∩Agora) ∖ (OpenTargets)
+
+```{r}
+query <- p |>
+  filter(..set.. == "(GVC∩Agora)∖(OpenTargets)") |> 
+  unnest(..values..) |>
+  select(gene_id = ..values..) |>
+  left_join(ago, by = join_by(gene_id == ensembl_gene_id)) |> 
+  left_join(otensg, by = join_by(gene_id == ensembl_gene_id)) |> 
+  arrange(desc(genetics_score), desc(otGeneticsPortal)) |> 
+  distinct(gene_id) |>
+  pull(gene_id)
+```
+
+```{r}
+gostres <- gost(query = query,
+                organism = "hsapiens",
+                domain_scope = "annotated",
+                exclude_iea = TRUE,
+                ordered_query = TRUE,
+                significant = TRUE,
+                user_threshold = 0.005,
+                correction_method = "fdr")
+
+gostres$result |> select(term_name, term_id, source, everything())
+```
+
+```{r}
+gostplot(gostres, capped = FALSE, interactive = TRUE)
+```
+
+### (Agora) ∖ (GVC∪OpenTargets)
+
+```{r}
+query <- p |>
+  filter(..set.. == "(Agora)∖(GVC∪OpenTargets)") |> 
+  unnest(..values..) |>
+  select(gene_id = ..values..) |>
+  left_join(ago, by = join_by(gene_id == ensembl_gene_id)) |> 
+  left_join(otensg, by = join_by(gene_id == ensembl_gene_id)) |> 
+  arrange(desc(genetics_score), desc(otGeneticsPortal)) |> 
+  distinct(gene_id) |>
+  pull(gene_id)
+```
+
+```{r}
+gostres <- gost(query = query,
+                organism = "hsapiens",
+                domain_scope = "annotated",
+                exclude_iea = TRUE,
+                ordered_query = TRUE,
+                significant = TRUE,
+                user_threshold = 0.005,
+                correction_method = "fdr")
+
+gostres$result |> select(term_name, term_id, source, everything())
+```
+
+```{r}
+gostplot(gostres, capped = FALSE, interactive = TRUE)
+```
+
+### (GVC) ∖ (Agora∪OpenTargets)
+
+```{r}
+query <- p |>
+  filter(..set.. == "(GVC)∖(Agora∪OpenTargets)") |> 
+  unnest(..values..) |>
+  select(gene_id = ..values..) |>
+  left_join(ago, by = join_by(gene_id == ensembl_gene_id)) |> 
+  left_join(otensg, by = join_by(gene_id == ensembl_gene_id)) |> 
+  arrange(desc(genetics_score), desc(otGeneticsPortal)) |> 
+  distinct(gene_id) |>
+  pull(gene_id)
+```
+
+```{r}
+gostres <- gost(query = query,
+                organism = "hsapiens",
+                domain_scope = "annotated",
+                exclude_iea = TRUE,
+                ordered_query = TRUE,
+                significant = TRUE,
+                user_threshold = 0.005,
+                correction_method = "fdr")
+
+gostres$result |> select(term_name, term_id, source, everything())
+```
+
+```{r}
+gostplot(gostres, capped = FALSE, interactive = TRUE)
+```
+
+## Perform ORA of GVC genes sorted by Agora or OpenTargets genetics scores
+
+### Agora
 
 ```{r}
 query <- d1 |> distinct(symbol) |> pull(symbol)
@@ -196,7 +389,9 @@ gostres$result |> select(term_name, term_id, source, everything())
 gostplot(gostres, capped = FALSE, interactive = TRUE)
 ```
 
-## Perform correlation analysis of GVC genes using Agora and Open Targets scores
+### OpenTargets
+
+## Correlation of Agora and OpenTargets scores in GVC genes
 
 ```{r}
 d1 |> nrow()
@@ -218,7 +413,7 @@ d1 |> drop_na(target_risk_score, globalScore) |>
   unnest(cor)
 ```
 
-## Overall correlation between Agora and Open Targets
+## Correlation of Agora and OpenTargets scores overall
 
 ```{r}
 d2 <- ago |> 
@@ -245,16 +440,6 @@ d2 |> drop_na(target_risk_score, globalScore) |> nrow()
 
 d2 |> drop_na(target_risk_score, globalScore) |>
   summarize(cor = tidy(cor.test(target_risk_score, globalScore, method="kendall"))) |>
-  unnest(cor)
-```
-
-```{r}
-overlap.genes |> nrow()
-
-overlap.genes |> drop_na(genetics_score, otGeneticsPortal) |> nrow()
-
-overlap.genes |> drop_na(genetics_score, otGeneticsPortal) |>
-  summarize(cor = tidy(cor.test(genetics_score, otGeneticsPortal, method="kendall"))) |>
   unnest(cor)
 ```
 
