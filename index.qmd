@@ -48,7 +48,7 @@ gvc.genes
 
 ### Agora
 
-Alzheimer's disease gene prioritization scores from [Agora](https://www.synapse.org/Synapse:syn25741025):
+Alzheimer's disease gene prioritization scores from [Agora](https://www.synapse.org/Synapse:syn25741025) (see also related [journal article](https://alz-journals.onlinelibrary.wiley.com/doi/10.1002/trc2.12461)):
 
 ```{r}
 ago1 <- read_json("syn25741025.overall_scores.json", simplifyVector = TRUE) |> as_tibble()
@@ -69,7 +69,7 @@ ago <- ago1 |> filter(hgnc_symbol %in% ago2$`Gene Symbol`)
 
 ### OpenTargets
 
-Alzheimer's disease gene prioritization scores from OpenTargets:
+Alzheimer's disease gene prioritization scores from [OpenTargets](https://platform.opentargets.org/disease/MONDO_0004975/associations):
 
 ```{r}
 ot <- read_tsv("OT-MONDO_0004975-associated-targets-6_4_2024-v24_03.tsv", show_col_types = FALSE, na = "No data")
@@ -179,6 +179,137 @@ gostplot(gostres, capped = FALSE, interactive = TRUE)
 # save overlap gene ids for later
 overlap_gene_ids <- query
 ```
+
+
+### GVC ∩ Agora
+
+```{r}
+query <- p |> 
+  filter(..set.. %in% c("GVC∩Agora∩OpenTargets", "(GVC∩Agora)∖(OpenTargets)")) |>
+  unnest(..values..) |>
+  select(gene_id = ..values..) |>
+  left_join(ago, by = join_by(gene_id == ensembl_gene_id)) |> 
+  left_join(otensg, by = join_by(gene_id == ensembl_gene_id)) |> 
+  arrange(desc(genetics_score), desc(otGeneticsPortal)) |> 
+  distinct(gene_id) |>
+  pull(gene_id)
+```
+
+```{r}
+gostres <- gost(query = query,
+                organism = "hsapiens",
+                domain_scope = "annotated",
+                exclude_iea = TRUE,
+                ordered_query = TRUE,
+                significant = TRUE,
+                user_threshold = 0.005,
+                correction_method = "fdr")
+
+gostres$result |> select(term_name, term_id, source, everything())
+```
+
+```{r}
+gostplot(gostres, capped = FALSE, interactive = TRUE)
+```
+
+
+### GVC ∩ OpenTargets
+
+```{r}
+query <- p |> 
+  filter(..set.. %in% c("GVC∩Agora∩OpenTargets", "(GVC∩OpenTargets)∖(Agora)")) |>
+  unnest(..values..) |>
+  select(gene_id = ..values..) |>
+  left_join(ago, by = join_by(gene_id == ensembl_gene_id)) |> 
+  left_join(otensg, by = join_by(gene_id == ensembl_gene_id)) |> 
+  arrange(desc(genetics_score), desc(otGeneticsPortal)) |> 
+  distinct(gene_id) |>
+  pull(gene_id)
+```
+
+```{r}
+gostres <- gost(query = query,
+                organism = "hsapiens",
+                domain_scope = "annotated",
+                exclude_iea = TRUE,
+                ordered_query = TRUE,
+                significant = TRUE,
+                user_threshold = 0.005,
+                correction_method = "fdr")
+
+gostres$result |> select(term_name, term_id, source, everything())
+```
+
+```{r}
+gostplot(gostres, capped = FALSE, interactive = TRUE)
+```
+
+
+### Agora ∩ OpenTargets
+
+```{r}
+query <- p |> 
+  filter(..set.. %in% c("GVC∩Agora∩OpenTargets", "(Agora∩OpenTargets)∖(GVC)")) |>
+  unnest(..values..) |>
+  select(gene_id = ..values..) |>
+  left_join(ago, by = join_by(gene_id == ensembl_gene_id)) |> 
+  left_join(otensg, by = join_by(gene_id == ensembl_gene_id)) |> 
+  arrange(desc(genetics_score), desc(otGeneticsPortal)) |> 
+  distinct(gene_id) |>
+  pull(gene_id)
+```
+
+```{r}
+gostres <- gost(query = query,
+                organism = "hsapiens",
+                domain_scope = "annotated",
+                exclude_iea = TRUE,
+                ordered_query = TRUE,
+                significant = TRUE,
+                user_threshold = 0.005,
+                correction_method = "fdr")
+
+gostres$result |> select(term_name, term_id, source, everything())
+```
+
+```{r}
+gostplot(gostres, capped = FALSE, interactive = TRUE)
+```
+
+
+### (GVC ∩ Agora) ∪ (GVC ∩ OpenTargets) ∪ (Agora ∩ OpenTargets)
+
+
+```{r}
+query <- p |> 
+  filter(..set.. %in% c("GVC∩Agora∩OpenTargets", "(GVC∩Agora)∖(OpenTargets)", "(GVC∩OpenTargets)∖(Agora)", "(Agora∩OpenTargets)∖(GVC)")) |>
+  unnest(..values..) |>
+  select(gene_id = ..values..) |>
+  left_join(ago, by = join_by(gene_id == ensembl_gene_id)) |> 
+  left_join(otensg, by = join_by(gene_id == ensembl_gene_id)) |> 
+  arrange(desc(genetics_score), desc(otGeneticsPortal)) |> 
+  distinct(gene_id) |>
+  pull(gene_id)
+```
+
+```{r}
+gostres <- gost(query = query,
+                organism = "hsapiens",
+                domain_scope = "annotated",
+                exclude_iea = TRUE,
+                ordered_query = TRUE,
+                significant = TRUE,
+                user_threshold = 0.005,
+                correction_method = "fdr")
+
+gostres$result |> select(term_name, term_id, source, everything())
+```
+
+```{r}
+gostplot(gostres, capped = FALSE, interactive = TRUE)
+```
+
+
 
 ### (Agora ∩ OpenTargets) ∖ (GVC)
 
