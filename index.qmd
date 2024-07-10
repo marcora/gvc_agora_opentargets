@@ -110,9 +110,44 @@ Arrange by Agora's `genetics_score` and OpenTargets' `otGeneticsPortal`:
 d1 <- gvc.genes |>
   left_join(ago, by = join_by(gene_id == ensembl_gene_id)) |> 
   left_join(otensg, by = join_by(gene_id == ensembl_gene_id)) |> 
-  arrange(desc(genetics_score), desc(otGeneticsPortal))
+  arrange(desc(genetics_score), desc(otGeneticsPortal)) |> 
+  select(-c(symbol, hgnc_symbol)) |> 
+  select(gene_id, gene_symbol, genetics_score, otGeneticsPortal, everything())
 
 d1
+```
+
+Arrange by OpenTargets' `otGeneticsPortal` and Agora's `genetics_score`:
+
+```{r}
+gvc.genes |>
+  left_join(ago, by = join_by(gene_id == ensembl_gene_id)) |> 
+  left_join(otensg, by = join_by(gene_id == ensembl_gene_id)) |> 
+  arrange(desc(otGeneticsPortal), desc(genetics_score)) |> 
+  select(-c(symbol, hgnc_symbol)) |> 
+  select(gene_id, gene_symbol, otGeneticsPortal, genetics_score, everything())
+```
+
+Arrange by Agora's `target_risk_score` and OpenTargets' `globalScore`:
+
+```{r}
+gvc.genes |>
+  left_join(ago, by = join_by(gene_id == ensembl_gene_id)) |> 
+  left_join(otensg, by = join_by(gene_id == ensembl_gene_id)) |> 
+  arrange(desc(target_risk_score), desc(globalScore)) |> 
+  select(-c(symbol, hgnc_symbol)) |> 
+  select(gene_id, gene_symbol, target_risk_score, globalScore, everything())
+```
+
+Arrange by OpenTargets' `globalScore` and Agora's `target_risk_score`:
+
+```{r}
+gvc.genes |>
+  left_join(ago, by = join_by(gene_id == ensembl_gene_id)) |> 
+  left_join(otensg, by = join_by(gene_id == ensembl_gene_id)) |> 
+  arrange(desc(globalScore), desc(target_risk_score)) |> 
+  select(-c(symbol, hgnc_symbol)) |> 
+  select(gene_id, gene_symbol, globalScore, target_risk_score, everything())
 ```
 
 ## Overlap between GVC genes and Agora and OpenTargets genes
