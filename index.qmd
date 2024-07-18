@@ -677,6 +677,36 @@ d.cor |> drop_na(target_risk_score, globalScore) |>
   unnest(cor)
 ```
 
+## GVC loci annotated with genes in overlaps
+
+### GVC ∩ Agora ∩ OpenTargets
+
+```{r}
+gene_ids <- p |> 
+  filter(..set.. == "GVC∩Agora∩OpenTargets") |>
+  unnest(..values..) |>
+  select(gene_id = ..values..) |>
+  left_join(ago, by = join_by(gene_id == ensembl_gene_id)) |> 
+  left_join(otensg, by = join_by(gene_id == ensembl_gene_id)) |>
+  distinct(gene_id) |>
+  pull(gene_id)
+
+length(gene_ids)
+```
+
+```{r}
+gvc %>%
+  filter(gene_id %in% gene_ids) %>%
+  select(gvc_locus = grouped_loci_gvc, gene_id, gene_symbol) %>%
+  arrange(gene_symbol) %>%
+  unite(gene, gene_id, gene_symbol, sep = ":", remove = FALSE) %>%
+  distinct(gvc_locus, gene, .keep_all = TRUE) %>%
+  group_by(gvc_locus) %>%
+  # summarize(genes = str_c(gene, collapse = ";"))
+  summarize(genes = str_c(gene, collapse = ";")) %>%
+  select(gvc_locus, genes)
+```
+
 ## Print environment
 
 ```{r}
