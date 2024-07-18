@@ -699,12 +699,13 @@ gvc %>%
   filter(gene_id %in% gene_ids) %>%
   select(gvc_locus = grouped_loci_gvc, gene_id, gene_symbol) %>%
   arrange(gene_symbol) %>%
-  unite(gene, gene_id, gene_symbol, sep = ":", remove = FALSE) %>%
+  mutate(gene = gene_symbol) %>%
+  # unite(gene, gene_id, gene_symbol, sep = ":", remove = FALSE) %>%
   distinct(gvc_locus, gene, .keep_all = TRUE) %>%
   group_by(gvc_locus) %>%
-  # summarize(genes = str_c(gene, collapse = ";"))
-  summarize(genes = str_c(gene, collapse = ";")) %>%
-  select(gvc_locus, genes)
+  summarize(genes = str_c(gene, collapse = " | ")) %>%
+  select(gvc_locus, genes) %>%
+  gt::gt()
 ```
 
 ## Print environment
