@@ -32,16 +32,16 @@ set.seed(666)
 Genes within 1Mb window of (each side of?) GVC loci from Fanny:
 
 ```{r}
-gvc <- read_xlsx("GVC_1Mb_comparison_050224.xlsx") |>
-  clean_names() |> 
-  separate(gene_id, c("gene_id", "version")) |>
+gvc <- read_xlsx("GVC_1Mb_comparison_050224.xlsx") %>%
+  clean_names() %>% 
+  separate(gene_id, c("gene_id", "version")) %>%
   select(-version, -agora_nominated_list, -opentarget_info)
 
 gvc
 ```
 
 ```{r}
-gvc.genes <- gvc |> distinct(gene_id, .keep_all = TRUE) |> select(gene_id, gene_symbol) |> arrange(gene_symbol)
+gvc.genes <- gvc %>% distinct(gene_id, .keep_all = TRUE) %>% select(gene_id, gene_symbol) %>% arrange(gene_symbol)
 
 gvc.genes
 ```
@@ -51,7 +51,7 @@ gvc.genes
 Alzheimer's disease gene prioritization scores from [Agora](https://www.synapse.org/Synapse:syn25741025) (see also related [journal article](https://alz-journals.onlinelibrary.wiley.com/doi/10.1002/trc2.12461)):
 
 ```{r}
-ago1 <- read_json("syn25741025.overall_scores.json", simplifyVector = TRUE) |> as_tibble()
+ago1 <- read_json("syn25741025.overall_scores.json", simplifyVector = TRUE) %>% as_tibble()
 
 ago1
 ```
@@ -64,7 +64,7 @@ ago2
 ```
 
 ```{r}
-ago <- ago1 |> filter(hgnc_symbol %in% ago2$`Gene Symbol`)
+ago <- ago1 %>% filter(hgnc_symbol %in% ago2$`Gene Symbol`)
 ```
 
 ### OpenTargets
@@ -86,9 +86,9 @@ otensg <- gconvert(
   organism = "hsapiens",
   target= "ENSG",
   mthreshold = Inf,
-  filter_na = TRUE) |> 
-  mutate(input_number = as.character(input_number)) |>
-  left_join(ot |> rownames_to_column(var = "input_number"), by = "input_number") |> 
+  filter_na = TRUE) %>% 
+  mutate(input_number = as.character(input_number)) %>%
+  left_join(ot %>% rownames_to_column(var = "input_number"), by = "input_number") %>% 
   select(ensembl_gene_id = target, otcols)
 
 otensg
@@ -126,19 +126,22 @@ p
 ### GVC ∩ Agora ∩ OpenTargets
 
 ```{r}
-query <- p |> 
-  filter(..set.. == "GVC∩Agora∩OpenTargets") |>
-  unnest(..values..) |>
-  select(gene_id = ..values..) |>
-  left_join(ago, by = join_by(gene_id == ensembl_gene_id)) |> 
-  left_join(otensg, by = join_by(gene_id == ensembl_gene_id)) |>
+genes <- p %>% 
+  filter(..set.. == "GVC∩Agora∩OpenTargets") %>%
+  unnest(..values..) %>%
+  select(gene_id = ..values..) %>%
+  left_join(ago, by = join_by(gene_id == ensembl_gene_id)) %>% 
+  left_join(otensg, by = join_by(gene_id == ensembl_gene_id)) %>%
   sample_frac(1L) %>% # randomize row order before arranging
-  arrange(desc(genetics_score), desc(otGeneticsPortal)) |> 
-  distinct(gene_id) |>
-  pull(gene_id)
+  select(gene_id, symbol, genetics_score, otGeneticsPortal, globalScore, target_risk_score, multi_omics_score) %>%
+  arrange(desc(genetics_score), desc(otGeneticsPortal))
+
+genes
 ```
 
 ```{r}
+query <- genes %>% distinct(gene_id) %>% pull(gene_id)
+
 gostres <- gost(query = query,
                 organism = "hsapiens",
                 domain_scope = "annotated",
@@ -148,7 +151,7 @@ gostres <- gost(query = query,
                 user_threshold = 0.005,
                 correction_method = "fdr")
 
-gostres$result |> select(term_name, term_id, source, everything())
+gostres$result %>% select(term_name, term_id, source, everything())
 ```
 
 ```{r}
@@ -163,19 +166,22 @@ overlap_gene_ids <- query
 ### GVC ∩ Agora
 
 ```{r}
-query <- p |> 
-  filter(..set.. %in% c("GVC∩Agora∩OpenTargets", "(GVC∩Agora)∖(OpenTargets)")) |>
-  unnest(..values..) |>
-  select(gene_id = ..values..) |>
-  left_join(ago, by = join_by(gene_id == ensembl_gene_id)) |> 
-  left_join(otensg, by = join_by(gene_id == ensembl_gene_id)) |> 
+genes <- p %>% 
+  filter(..set.. %in% c("GVC∩Agora∩OpenTargets", "(GVC∩Agora)∖(OpenTargets)")) %>%
+  unnest(..values..) %>%
+  select(gene_id = ..values..) %>%
+  left_join(ago, by = join_by(gene_id == ensembl_gene_id)) %>% 
+  left_join(otensg, by = join_by(gene_id == ensembl_gene_id)) %>% 
   sample_frac(1L) %>% # randomize row order before arranging
-  arrange(desc(genetics_score), desc(otGeneticsPortal)) |> 
-  distinct(gene_id) |>
-  pull(gene_id)
+  select(gene_id, symbol, genetics_score, otGeneticsPortal, globalScore, target_risk_score, multi_omics_score) %>%
+  arrange(desc(genetics_score), desc(otGeneticsPortal))
+
+genes
 ```
 
 ```{r}
+query <- genes %>% distinct(gene_id) %>% pull(gene_id)
+
 gostres <- gost(query = query,
                 organism = "hsapiens",
                 domain_scope = "annotated",
@@ -185,7 +191,7 @@ gostres <- gost(query = query,
                 user_threshold = 0.005,
                 correction_method = "fdr")
 
-gostres$result |> select(term_name, term_id, source, everything())
+gostres$result %>% select(term_name, term_id, source, everything())
 ```
 
 ```{r}
@@ -195,19 +201,22 @@ gostplot(gostres, capped = FALSE, interactive = TRUE)
 ### GVC ∩ OpenTargets
 
 ```{r}
-query <- p |> 
-  filter(..set.. %in% c("GVC∩Agora∩OpenTargets", "(GVC∩OpenTargets)∖(Agora)")) |>
-  unnest(..values..) |>
-  select(gene_id = ..values..) |>
-  left_join(ago, by = join_by(gene_id == ensembl_gene_id)) |> 
-  left_join(otensg, by = join_by(gene_id == ensembl_gene_id)) |> 
+genes <- p %>% 
+  filter(..set.. %in% c("GVC∩Agora∩OpenTargets", "(GVC∩OpenTargets)∖(Agora)")) %>%
+  unnest(..values..) %>%
+  select(gene_id = ..values..) %>%
+  left_join(ago, by = join_by(gene_id == ensembl_gene_id)) %>% 
+  left_join(otensg, by = join_by(gene_id == ensembl_gene_id)) %>% 
   sample_frac(1L) %>% # randomize row order before arranging
-  arrange(desc(genetics_score), desc(otGeneticsPortal)) |> 
-  distinct(gene_id) |>
-  pull(gene_id)
+  select(gene_id, symbol, genetics_score, otGeneticsPortal, globalScore, target_risk_score, multi_omics_score) %>%
+  arrange(desc(genetics_score), desc(otGeneticsPortal))
+
+genes
 ```
 
 ```{r}
+query <- genes %>% distinct(gene_id) %>% pull(gene_id)
+
 gostres <- gost(query = query,
                 organism = "hsapiens",
                 domain_scope = "annotated",
@@ -217,7 +226,7 @@ gostres <- gost(query = query,
                 user_threshold = 0.005,
                 correction_method = "fdr")
 
-gostres$result |> select(term_name, term_id, source, everything())
+gostres$result %>% select(term_name, term_id, source, everything())
 ```
 
 ```{r}
@@ -227,19 +236,22 @@ gostplot(gostres, capped = FALSE, interactive = TRUE)
 ### Agora ∩ OpenTargets
 
 ```{r}
-query <- p |> 
-  filter(..set.. %in% c("GVC∩Agora∩OpenTargets", "(Agora∩OpenTargets)∖(GVC)")) |>
-  unnest(..values..) |>
-  select(gene_id = ..values..) |>
-  left_join(ago, by = join_by(gene_id == ensembl_gene_id)) |> 
-  left_join(otensg, by = join_by(gene_id == ensembl_gene_id)) |> 
+genes <- p %>% 
+  filter(..set.. %in% c("GVC∩Agora∩OpenTargets", "(Agora∩OpenTargets)∖(GVC)")) %>%
+  unnest(..values..) %>%
+  select(gene_id = ..values..) %>%
+  left_join(ago, by = join_by(gene_id == ensembl_gene_id)) %>% 
+  left_join(otensg, by = join_by(gene_id == ensembl_gene_id)) %>% 
   sample_frac(1L) %>% # randomize row order before arranging
-  arrange(desc(genetics_score), desc(otGeneticsPortal)) |> 
-  distinct(gene_id) |>
-  pull(gene_id)
+  select(gene_id, symbol, genetics_score, otGeneticsPortal, globalScore, target_risk_score, multi_omics_score) %>%
+  arrange(desc(genetics_score), desc(otGeneticsPortal))
+
+genes
 ```
 
 ```{r}
+query <- genes %>% distinct(gene_id) %>% pull(gene_id)
+
 gostres <- gost(query = query,
                 organism = "hsapiens",
                 domain_scope = "annotated",
@@ -249,7 +261,7 @@ gostres <- gost(query = query,
                 user_threshold = 0.005,
                 correction_method = "fdr")
 
-gostres$result |> select(term_name, term_id, source, everything())
+gostres$result %>% select(term_name, term_id, source, everything())
 ```
 
 ```{r}
@@ -259,19 +271,22 @@ gostplot(gostres, capped = FALSE, interactive = TRUE)
 ### (GVC ∩ Agora) ∪ (GVC ∩ OpenTargets) ∪ (Agora ∩ OpenTargets)
 
 ```{r}
-query <- p |> 
-  filter(..set.. %in% c("GVC∩Agora∩OpenTargets", "(GVC∩Agora)∖(OpenTargets)", "(GVC∩OpenTargets)∖(Agora)", "(Agora∩OpenTargets)∖(GVC)")) |>
-  unnest(..values..) |>
-  select(gene_id = ..values..) |>
-  left_join(ago, by = join_by(gene_id == ensembl_gene_id)) |> 
-  left_join(otensg, by = join_by(gene_id == ensembl_gene_id)) |> 
+genes <- p %>% 
+  filter(..set.. %in% c("GVC∩Agora∩OpenTargets", "(GVC∩Agora)∖(OpenTargets)", "(GVC∩OpenTargets)∖(Agora)", "(Agora∩OpenTargets)∖(GVC)")) %>%
+  unnest(..values..) %>%
+  select(gene_id = ..values..) %>%
+  left_join(ago, by = join_by(gene_id == ensembl_gene_id)) %>% 
+  left_join(otensg, by = join_by(gene_id == ensembl_gene_id)) %>% 
   sample_frac(1L) %>% # randomize row order before arranging
-  arrange(desc(genetics_score), desc(otGeneticsPortal)) |> 
-  distinct(gene_id) |>
-  pull(gene_id)
+  select(gene_id, symbol, genetics_score, otGeneticsPortal, globalScore, target_risk_score, multi_omics_score) %>%
+  arrange(desc(genetics_score), desc(otGeneticsPortal))
+
+genes
 ```
 
 ```{r}
+query <- genes %>% distinct(gene_id) %>% pull(gene_id)
+
 gostres <- gost(query = query,
                 organism = "hsapiens",
                 domain_scope = "annotated",
@@ -281,7 +296,7 @@ gostres <- gost(query = query,
                 user_threshold = 0.005,
                 correction_method = "fdr")
 
-gostres$result |> select(term_name, term_id, source, everything())
+gostres$result %>% select(term_name, term_id, source, everything())
 ```
 
 ```{r}
@@ -291,19 +306,22 @@ gostplot(gostres, capped = FALSE, interactive = TRUE)
 ### (Agora ∩ OpenTargets) ∖ (GVC)
 
 ```{r}
-query <- p |>
-  filter(..set.. == "(Agora∩OpenTargets)∖(GVC)") |> 
-  unnest(..values..) |>
-  select(gene_id = ..values..) |>
-  left_join(ago, by = join_by(gene_id == ensembl_gene_id)) |> 
-  left_join(otensg, by = join_by(gene_id == ensembl_gene_id)) |> 
+genes <- p %>%
+  filter(..set.. == "(Agora∩OpenTargets)∖(GVC)") %>% 
+  unnest(..values..) %>%
+  select(gene_id = ..values..) %>%
+  left_join(ago, by = join_by(gene_id == ensembl_gene_id)) %>% 
+  left_join(otensg, by = join_by(gene_id == ensembl_gene_id)) %>% 
   sample_frac(1L) %>% # randomize row order before arranging
-  arrange(desc(genetics_score), desc(otGeneticsPortal)) |> 
-  distinct(gene_id) |>
-  pull(gene_id)
+  select(gene_id, symbol, genetics_score, otGeneticsPortal, globalScore, target_risk_score, multi_omics_score) %>%
+  arrange(desc(genetics_score), desc(otGeneticsPortal))
+
+genes
 ```
 
 ```{r}
+query <- genes %>% distinct(gene_id) %>% pull(gene_id)
+
 gostres <- gost(query = query,
                 organism = "hsapiens",
                 domain_scope = "annotated",
@@ -313,7 +331,7 @@ gostres <- gost(query = query,
                 user_threshold = 0.005,
                 correction_method = "fdr")
 
-gostres$result |> select(term_name, term_id, source, everything())
+gostres$result %>% select(term_name, term_id, source, everything())
 ```
 
 ```{r}
@@ -323,19 +341,22 @@ gostplot(gostres, capped = FALSE, interactive = TRUE)
 ### (GVC ∩ OpenTargets) ∖ (Agora)
 
 ```{r}
-query <- p |>
-  filter(..set.. == "(GVC∩OpenTargets)∖(Agora)") |> 
-  unnest(..values..) |>
-  select(gene_id = ..values..) |>
-  left_join(ago, by = join_by(gene_id == ensembl_gene_id)) |> 
-  left_join(otensg, by = join_by(gene_id == ensembl_gene_id)) |> 
+genes <- p %>%
+  filter(..set.. == "(GVC∩OpenTargets)∖(Agora)") %>% 
+  unnest(..values..) %>%
+  select(gene_id = ..values..) %>%
+  left_join(ago, by = join_by(gene_id == ensembl_gene_id)) %>% 
+  left_join(otensg, by = join_by(gene_id == ensembl_gene_id)) %>% 
   sample_frac(1L) %>% # randomize row order before arranging
-  arrange(desc(genetics_score), desc(otGeneticsPortal)) |> 
-  distinct(gene_id) |>
-  pull(gene_id)
+  select(gene_id, symbol, genetics_score, otGeneticsPortal, globalScore, target_risk_score, multi_omics_score) %>%
+  arrange(desc(genetics_score), desc(otGeneticsPortal))
+
+genes
 ```
 
 ```{r}
+query <- genes %>% distinct(gene_id) %>% pull(gene_id)
+
 gostres <- gost(query = query,
                 organism = "hsapiens",
                 domain_scope = "annotated",
@@ -345,7 +366,7 @@ gostres <- gost(query = query,
                 user_threshold = 0.005,
                 correction_method = "fdr")
 
-gostres$result |> select(term_name, term_id, source, everything())
+gostres$result %>% select(term_name, term_id, source, everything())
 ```
 
 ```{r}
@@ -355,19 +376,22 @@ gostplot(gostres, capped = FALSE, interactive = TRUE)
 ### (OpenTargets) ∖ (GVC ∪ Agora)
 
 ```{r}
-query <- p |>
-  filter(..set.. == "(OpenTargets)∖(GVC∪Agora)") |> 
-  unnest(..values..) |>
-  select(gene_id = ..values..) |>
-  left_join(ago, by = join_by(gene_id == ensembl_gene_id)) |> 
-  left_join(otensg, by = join_by(gene_id == ensembl_gene_id)) |> 
+genes <- p %>%
+  filter(..set.. == "(OpenTargets)∖(GVC∪Agora)") %>% 
+  unnest(..values..) %>%
+  select(gene_id = ..values..) %>%
+  left_join(ago, by = join_by(gene_id == ensembl_gene_id)) %>% 
+  left_join(otensg, by = join_by(gene_id == ensembl_gene_id)) %>% 
   sample_frac(1L) %>% # randomize row order before arranging
-  arrange(desc(genetics_score), desc(otGeneticsPortal)) |> 
-  distinct(gene_id) |>
-  pull(gene_id)
+  select(gene_id, symbol, genetics_score, otGeneticsPortal, globalScore, target_risk_score, multi_omics_score) %>%
+  arrange(desc(genetics_score), desc(otGeneticsPortal))
+
+genes
 ```
 
 ```{r}
+query <- genes %>% distinct(gene_id) %>% pull(gene_id)
+
 gostres <- gost(query = query,
                 organism = "hsapiens",
                 domain_scope = "annotated",
@@ -377,7 +401,7 @@ gostres <- gost(query = query,
                 user_threshold = 0.005,
                 correction_method = "fdr")
 
-gostres$result |> select(term_name, term_id, source, everything())
+gostres$result %>% select(term_name, term_id, source, everything())
 ```
 
 ```{r}
@@ -387,19 +411,22 @@ gostplot(gostres, capped = FALSE, interactive = TRUE)
 ### (GVC ∩ Agora) ∖ (OpenTargets)
 
 ```{r}
-query <- p |>
-  filter(..set.. == "(GVC∩Agora)∖(OpenTargets)") |> 
-  unnest(..values..) |>
-  select(gene_id = ..values..) |>
-  left_join(ago, by = join_by(gene_id == ensembl_gene_id)) |> 
-  left_join(otensg, by = join_by(gene_id == ensembl_gene_id)) |> 
+genes <- p %>%
+  filter(..set.. == "(GVC∩Agora)∖(OpenTargets)") %>% 
+  unnest(..values..) %>%
+  select(gene_id = ..values..) %>%
+  left_join(ago, by = join_by(gene_id == ensembl_gene_id)) %>% 
+  left_join(otensg, by = join_by(gene_id == ensembl_gene_id)) %>% 
   sample_frac(1L) %>% # randomize row order before arranging
-  arrange(desc(genetics_score), desc(otGeneticsPortal)) |> 
-  distinct(gene_id) |>
-  pull(gene_id)
+  select(gene_id, symbol, genetics_score, otGeneticsPortal, globalScore, target_risk_score, multi_omics_score) %>%
+  arrange(desc(genetics_score), desc(otGeneticsPortal))
+
+genes
 ```
 
 ```{r}
+query <- genes %>% distinct(gene_id) %>% pull(gene_id)
+
 gostres <- gost(query = query,
                 organism = "hsapiens",
                 domain_scope = "annotated",
@@ -409,7 +436,7 @@ gostres <- gost(query = query,
                 user_threshold = 0.005,
                 correction_method = "fdr")
 
-gostres$result |> select(term_name, term_id, source, everything())
+gostres$result %>% select(term_name, term_id, source, everything())
 ```
 
 ```{r}
@@ -419,19 +446,22 @@ gostplot(gostres, capped = FALSE, interactive = TRUE)
 ### (Agora) ∖ (GVC ∪ OpenTargets)
 
 ```{r}
-query <- p |>
-  filter(..set.. == "(Agora)∖(GVC∪OpenTargets)") |> 
-  unnest(..values..) |>
-  select(gene_id = ..values..) |>
-  left_join(ago, by = join_by(gene_id == ensembl_gene_id)) |> 
-  left_join(otensg, by = join_by(gene_id == ensembl_gene_id)) |> 
+genes <- p %>%
+  filter(..set.. == "(Agora)∖(GVC∪OpenTargets)") %>% 
+  unnest(..values..) %>%
+  select(gene_id = ..values..) %>%
+  left_join(ago, by = join_by(gene_id == ensembl_gene_id)) %>% 
+  left_join(otensg, by = join_by(gene_id == ensembl_gene_id)) %>% 
   sample_frac(1L) %>% # randomize row order before arranging
-  arrange(desc(genetics_score), desc(otGeneticsPortal)) |> 
-  distinct(gene_id) |>
-  pull(gene_id)
+  select(gene_id, symbol, genetics_score, otGeneticsPortal, globalScore, target_risk_score, multi_omics_score) %>%
+  arrange(desc(genetics_score), desc(otGeneticsPortal))
+
+genes
 ```
 
 ```{r}
+query <- genes %>% distinct(gene_id) %>% pull(gene_id)
+
 gostres <- gost(query = query,
                 organism = "hsapiens",
                 domain_scope = "annotated",
@@ -441,7 +471,7 @@ gostres <- gost(query = query,
                 user_threshold = 0.005,
                 correction_method = "fdr")
 
-gostres$result |> select(term_name, term_id, source, everything())
+gostres$result %>% select(term_name, term_id, source, everything())
 ```
 
 ```{r}
@@ -451,19 +481,22 @@ gostplot(gostres, capped = FALSE, interactive = TRUE)
 ### (GVC) ∖ (Agora ∪ OpenTargets)
 
 ```{r}
-query <- p |>
-  filter(..set.. == "(GVC)∖(Agora∪OpenTargets)") |> 
-  unnest(..values..) |>
-  select(gene_id = ..values..) |>
-  left_join(ago, by = join_by(gene_id == ensembl_gene_id)) |> 
-  left_join(otensg, by = join_by(gene_id == ensembl_gene_id)) |> 
+genes <- p %>%
+  filter(..set.. == "(GVC)∖(Agora∪OpenTargets)") %>% 
+  unnest(..values..) %>%
+  select(gene_id = ..values..) %>%
+  left_join(ago, by = join_by(gene_id == ensembl_gene_id)) %>% 
+  left_join(otensg, by = join_by(gene_id == ensembl_gene_id)) %>% 
   sample_frac(1L) %>% # randomize row order before arranging
-  arrange(desc(genetics_score), desc(otGeneticsPortal)) |> 
-  distinct(gene_id) |>
-  pull(gene_id)
+  select(gene_id, symbol, genetics_score, otGeneticsPortal, globalScore, target_risk_score, multi_omics_score) %>%
+  arrange(desc(genetics_score), desc(otGeneticsPortal))
+
+genes
 ```
 
 ```{r}
+query <- genes %>% distinct(gene_id) %>% pull(gene_id)
+
 gostres <- gost(query = query,
                 organism = "hsapiens",
                 domain_scope = "annotated",
@@ -473,7 +506,7 @@ gostres <- gost(query = query,
                 user_threshold = 0.005,
                 correction_method = "fdr")
 
-gostres$result |> select(term_name, term_id, source, everything())
+gostres$result %>% select(term_name, term_id, source, everything())
 ```
 
 ```{r}
@@ -487,19 +520,19 @@ gostplot(gostres, capped = FALSE, interactive = TRUE)
 Arrange by Agora's `genetics_score` and OpenTargets' `otGeneticsPortal`:
 
 ```{r}
-d1 <- gvc.genes |>
-  left_join(ago, by = join_by(gene_id == ensembl_gene_id)) |> 
-  left_join(otensg, by = join_by(gene_id == ensembl_gene_id)) |> 
+d1 <- gvc.genes %>%
+  left_join(ago, by = join_by(gene_id == ensembl_gene_id)) %>% 
+  left_join(otensg, by = join_by(gene_id == ensembl_gene_id)) %>% 
   sample_frac(1L) %>% # randomize row order before arranging
-  arrange(desc(genetics_score), desc(otGeneticsPortal)) |> 
-  select(-c(symbol, hgnc_symbol)) |> 
+  arrange(desc(genetics_score), desc(otGeneticsPortal)) %>% 
+  select(-c(symbol, hgnc_symbol)) %>% 
   select(gene_id, gene_symbol, genetics_score, otGeneticsPortal, everything())
 
 d1
 ```
 
 ```{r}
-query <- d1 |> distinct(gene_id) |> pull(gene_id)
+query <- d1 %>% distinct(gene_id) %>% pull(gene_id)
 
 gostres <- gost(query = query,
                 organism = "hsapiens",
@@ -510,7 +543,7 @@ gostres <- gost(query = query,
                 user_threshold = 0.005,
                 correction_method = "fdr")
 
-gostres$result |> select(term_name, term_id, source, everything())
+gostres$result %>% select(term_name, term_id, source, everything())
 ```
 
 ```{r}
@@ -522,19 +555,19 @@ gostplot(gostres, capped = FALSE, interactive = TRUE)
 Arrange by OpenTargets' `otGeneticsPortal` and Agora's `genetics_score`:
 
 ```{r}
-d2 <- gvc.genes |>
-  left_join(ago, by = join_by(gene_id == ensembl_gene_id)) |> 
-  left_join(otensg, by = join_by(gene_id == ensembl_gene_id)) |> 
+d2 <- gvc.genes %>%
+  left_join(ago, by = join_by(gene_id == ensembl_gene_id)) %>% 
+  left_join(otensg, by = join_by(gene_id == ensembl_gene_id)) %>% 
   sample_frac(1L) %>% # randomize row order before arranging
-  arrange(desc(otGeneticsPortal), desc(genetics_score)) |> 
-  select(-c(symbol, hgnc_symbol)) |> 
+  arrange(desc(otGeneticsPortal), desc(genetics_score)) %>% 
+  select(-c(symbol, hgnc_symbol)) %>% 
   select(gene_id, gene_symbol, otGeneticsPortal, genetics_score, everything())
 
 d2
 ```
 
 ```{r}
-query <- d2 |> distinct(gene_id) |> pull(gene_id)
+query <- d2 %>% distinct(gene_id) %>% pull(gene_id)
 
 gostres <- gost(query = query,
                 organism = "hsapiens",
@@ -545,7 +578,7 @@ gostres <- gost(query = query,
                 user_threshold = 0.005,
                 correction_method = "fdr")
 
-gostres$result |> select(term_name, term_id, source, everything())
+gostres$result %>% select(term_name, term_id, source, everything())
 ```
 
 ```{r}
@@ -557,19 +590,19 @@ gostplot(gostres, capped = FALSE, interactive = TRUE)
 Arrange by Agora's `target_risk_score` and OpenTargets' `globalScore`:
 
 ```{r}
-d3 <- gvc.genes |>
-  left_join(ago, by = join_by(gene_id == ensembl_gene_id)) |> 
-  left_join(otensg, by = join_by(gene_id == ensembl_gene_id)) |> 
+d3 <- gvc.genes %>%
+  left_join(ago, by = join_by(gene_id == ensembl_gene_id)) %>% 
+  left_join(otensg, by = join_by(gene_id == ensembl_gene_id)) %>% 
   sample_frac(1L) %>% # randomize row order before arranging
-  arrange(desc(target_risk_score), desc(globalScore)) |> 
-  select(-c(symbol, hgnc_symbol)) |> 
+  arrange(desc(target_risk_score), desc(globalScore)) %>% 
+  select(-c(symbol, hgnc_symbol)) %>% 
   select(gene_id, gene_symbol, target_risk_score, globalScore, everything())
 
 d3
 ```
 
 ```{r}
-query <- d3 |> distinct(gene_id) |> pull(gene_id)
+query <- d3 %>% distinct(gene_id) %>% pull(gene_id)
 
 gostres <- gost(query = query,
                 organism = "hsapiens",
@@ -580,7 +613,7 @@ gostres <- gost(query = query,
                 user_threshold = 0.005,
                 correction_method = "fdr")
 
-gostres$result |> select(term_name, term_id, source, everything())
+gostres$result %>% select(term_name, term_id, source, everything())
 ```
 
 ```{r}
@@ -592,19 +625,19 @@ gostplot(gostres, capped = FALSE, interactive = TRUE)
 Arrange by OpenTargets' `globalScore` and Agora's `target_risk_score`:
 
 ```{r}
-d4 <- gvc.genes |>
-  left_join(ago, by = join_by(gene_id == ensembl_gene_id)) |> 
-  left_join(otensg, by = join_by(gene_id == ensembl_gene_id)) |> 
+d4 <- gvc.genes %>%
+  left_join(ago, by = join_by(gene_id == ensembl_gene_id)) %>% 
+  left_join(otensg, by = join_by(gene_id == ensembl_gene_id)) %>% 
   sample_frac(1L) %>% # randomize row order before arranging
-  arrange(desc(globalScore), desc(target_risk_score)) |> 
-  select(-c(symbol, hgnc_symbol)) |> 
+  arrange(desc(globalScore), desc(target_risk_score)) %>% 
+  select(-c(symbol, hgnc_symbol)) %>% 
   select(gene_id, gene_symbol, globalScore, target_risk_score, everything())
 
 d4
 ```
 
 ```{r}
-query <- d4 |> distinct(gene_id) |> pull(gene_id)
+query <- d4 %>% distinct(gene_id) %>% pull(gene_id)
 
 gostres <- gost(query = query,
                 organism = "hsapiens",
@@ -615,7 +648,7 @@ gostres <- gost(query = query,
                 user_threshold = 0.005,
                 correction_method = "fdr")
 
-gostres$result |> select(term_name, term_id, source, everything())
+gostres$result %>% select(term_name, term_id, source, everything())
 ```
 
 ```{r}
@@ -625,55 +658,55 @@ gostplot(gostres, capped = FALSE, interactive = TRUE)
 ## Correlation of Agora and OpenTargets scores (GVC genes only)
 
 ```{r}
-d.cor <- gvc.genes |>
-  left_join(ago, by = join_by(gene_id == ensembl_gene_id)) |> 
+d.cor <- gvc.genes %>%
+  left_join(ago, by = join_by(gene_id == ensembl_gene_id)) %>% 
   left_join(otensg, by = join_by(gene_id == ensembl_gene_id))
 ```
 
 ```{r}
-d.cor |> nrow()
+d.cor %>% nrow()
 
-d.cor |> drop_na(genetics_score, otGeneticsPortal) |> nrow()
+d.cor %>% drop_na(genetics_score, otGeneticsPortal) %>% nrow()
 
-d.cor |> drop_na(genetics_score, otGeneticsPortal) |>
-  summarize(cor = tidy(cor.test(genetics_score, otGeneticsPortal, method="kendall"))) |>
+d.cor %>% drop_na(genetics_score, otGeneticsPortal) %>%
+  summarize(cor = tidy(cor.test(genetics_score, otGeneticsPortal, method="kendall"))) %>%
   unnest(cor)
 ```
 
 ```{r}
-d.cor |> nrow()
+d.cor %>% nrow()
 
-d.cor |> drop_na(target_risk_score, globalScore) |> nrow()
+d.cor %>% drop_na(target_risk_score, globalScore) %>% nrow()
 
-d.cor |> drop_na(target_risk_score, globalScore) |>
-  summarize(cor = tidy(cor.test(target_risk_score, globalScore, method="kendall"))) |>
+d.cor %>% drop_na(target_risk_score, globalScore) %>%
+  summarize(cor = tidy(cor.test(target_risk_score, globalScore, method="kendall"))) %>%
   unnest(cor)
 ```
 
 ## Correlation of Agora and OpenTargets scores (all genes)
 
 ```{r}
-d.cor <- ago |> 
+d.cor <- ago %>% 
   left_join(otensg, by = "ensembl_gene_id")
 ```
 
 ```{r}
-d.cor |> nrow()
+d.cor %>% nrow()
 
-d.cor |> drop_na(genetics_score, otGeneticsPortal) |> nrow()
+d.cor %>% drop_na(genetics_score, otGeneticsPortal) %>% nrow()
 
-d.cor |> drop_na(genetics_score, otGeneticsPortal) |>
-  summarize(cor = tidy(cor.test(genetics_score, otGeneticsPortal, method="kendall"))) |>
+d.cor %>% drop_na(genetics_score, otGeneticsPortal) %>%
+  summarize(cor = tidy(cor.test(genetics_score, otGeneticsPortal, method="kendall"))) %>%
   unnest(cor)
 ```
 
 ```{r}
-d.cor |> nrow()
+d.cor %>% nrow()
 
-d.cor |> drop_na(target_risk_score, globalScore) |> nrow()
+d.cor %>% drop_na(target_risk_score, globalScore) %>% nrow()
 
-d.cor |> drop_na(target_risk_score, globalScore) |>
-  summarize(cor = tidy(cor.test(target_risk_score, globalScore, method="kendall"))) |>
+d.cor %>% drop_na(target_risk_score, globalScore) %>%
+  summarize(cor = tidy(cor.test(target_risk_score, globalScore, method="kendall"))) %>%
   unnest(cor)
 ```
 
@@ -682,13 +715,13 @@ d.cor |> drop_na(target_risk_score, globalScore) |>
 ### GVC ∩ Agora ∩ OpenTargets
 
 ```{r}
-gene_ids <- p |> 
-  filter(..set.. == "GVC∩Agora∩OpenTargets") |>
-  unnest(..values..) |>
-  select(gene_id = ..values..) |>
-  left_join(ago, by = join_by(gene_id == ensembl_gene_id)) |> 
-  left_join(otensg, by = join_by(gene_id == ensembl_gene_id)) |>
-  distinct(gene_id) |>
+gene_ids <- p %>% 
+  filter(..set.. == "GVC∩Agora∩OpenTargets") %>%
+  unnest(..values..) %>%
+  select(gene_id = ..values..) %>%
+  left_join(ago, by = join_by(gene_id == ensembl_gene_id)) %>% 
+  left_join(otensg, by = join_by(gene_id == ensembl_gene_id)) %>%
+  distinct(gene_id) %>%
   pull(gene_id)
 
 length(gene_ids)
