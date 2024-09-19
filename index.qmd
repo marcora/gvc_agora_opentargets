@@ -72,7 +72,9 @@ ago <- ago1 %>% filter(hgnc_symbol %in% ago2$`Gene Symbol`)
 Alzheimer's disease gene prioritization scores from [OpenTargets](https://platform.opentargets.org/disease/MONDO_0004975/associations):
 
 ```{r}
-ot <- read_tsv("OT-MONDO_0004975-associated-targets-6_4_2024-v24_03.tsv", show_col_types = FALSE, na = "No data")
+# ot <- read_tsv("OT-MONDO_0004975-associated-targets-6_4_2024-v24_03.tsv", show_col_types = FALSE, na = "No data")
+
+ot <- read_tsv("OT-MONDO_0004975-associated-targets-9_19_2024-v24_09.tsv", show_col_types = FALSE, na = "No data")
 
 ot
 ```
@@ -739,6 +741,144 @@ gvc %>%
   summarize(genes = str_c(gene, collapse = " | ")) %>%
   select(gvc_locus, genes) %>%
   gt::gt()
+```
+
+## Perform ORA of Agora and OpenTargets genes sorted by global or genetic score
+
+### Agora genes sorted by `genetics_score`
+
+```{r}
+d5 <- ago %>%
+  drop_na(genetics_score) %>%
+  arrange(desc(genetics_score))
+
+d5
+```
+
+```{r}
+query <- d5 %>% distinct(ensembl_gene_id) %>% pull(ensembl_gene_id)
+
+gostres <- gost(query = query,
+                organism = "hsapiens",
+                domain_scope = "annotated",
+                exclude_iea = TRUE,
+                ordered_query = TRUE,
+                significant = TRUE,
+                user_threshold = 0.005,
+                correction_method = "fdr")
+
+gostres$result %>% select(term_name, term_id, source, everything())
+```
+
+```{r}
+gostplot(gostres, capped = FALSE, interactive = TRUE)
+```
+
+### OpenTargets genes sorted by `otGeneticsPortal`
+
+```{r}
+d6 <- otensg %>%
+  drop_na(otGeneticsPortal) %>%
+  arrange(desc(otGeneticsPortal))
+
+d6
+```
+
+```{r}
+query <- d6 %>% distinct(ensembl_gene_id) %>% pull(ensembl_gene_id)
+
+gostres <- gost(query = query,
+                organism = "hsapiens",
+                domain_scope = "annotated",
+                exclude_iea = TRUE,
+                ordered_query = TRUE,
+                significant = TRUE,
+                user_threshold = 0.005,
+                correction_method = "fdr")
+
+gostres$result %>% select(term_name, term_id, source, everything())
+```
+
+```{r}
+gostplot(gostres, capped = FALSE, interactive = TRUE)
+```
+
+### Agora genes sorted by `target_risk_score`
+
+```{r}
+d7 <- ago %>%
+  drop_na(target_risk_score) %>%
+  arrange(desc(target_risk_score))
+
+d7
+```
+
+```{r}
+query <- d7 %>% distinct(ensembl_gene_id) %>% pull(ensembl_gene_id)
+
+gostres <- gost(query = query,
+                organism = "hsapiens",
+                domain_scope = "annotated",
+                exclude_iea = TRUE,
+                ordered_query = TRUE,
+                significant = TRUE,
+                user_threshold = 0.005,
+                correction_method = "fdr")
+
+gostres$result %>% select(term_name, term_id, source, everything())
+```
+
+```{r}
+gostplot(gostres, capped = FALSE, interactive = TRUE)
+```
+
+### OpenTargets genes sorted by `globalScore`
+
+```{r}
+d8 <- otensg %>%
+  drop_na(globalScore) %>%
+  arrange(desc(globalScore))
+
+d8
+```
+
+```{r}
+query <- d8 %>% distinct(ensembl_gene_id) %>% pull(ensembl_gene_id)
+
+gostres <- gost(query = query,
+                organism = "hsapiens",
+                domain_scope = "annotated",
+                exclude_iea = TRUE,
+                ordered_query = TRUE,
+                significant = TRUE,
+                user_threshold = 0.005,
+                correction_method = "fdr")
+
+gostres$result %>% select(term_name, term_id, source, everything())
+```
+
+```{r}
+gostplot(gostres, capped = FALSE, interactive = TRUE)
+```
+
+## Check missing OpenTargets scores in Brian's table
+
+```{r}
+t <- read_xlsx("8-23-2024 - GVC Table 1C - WORKING COPYL_MRC.xlsx", skip = 1, na = "No data") |> janitor::clean_names() |> select(gvc_expanded_list_of_possible_genes_500kb, open_target_scores_global, open_target_scores_genetics) |> rename(symbol = gvc_expanded_list_of_possible_genes_500kb)
+```
+
+```{r}
+t |>
+  left_join(ot, by = "symbol") |>
+  filter(round(open_target_scores_global, 4) != round(globalScore, 4)) |> 
+  select(symbol, open_target_scores_global, globalScore)
+```
+
+```{r}
+t |>
+  left_join(ot, by = "symbol") |>
+  filter(round(open_target_scores_genetics, 4) != round(otGeneticsPortal, 4)) |> 
+  select(symbol, open_target_scores_genetics, otGeneticsPortal)
 ```
 
 ## Print environment
