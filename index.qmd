@@ -72,9 +72,9 @@ ago <- ago1 %>% filter(hgnc_symbol %in% ago2$`Gene Symbol`)
 Alzheimer's disease gene prioritization scores from [OpenTargets](https://platform.opentargets.org/disease/MONDO_0004975/associations):
 
 ```{r}
-# ot <- read_tsv("OT-MONDO_0004975-associated-targets-6_4_2024-v24_03.tsv", show_col_types = FALSE, na = "No data")
+ot <- read_tsv("OT-MONDO_0004975-associated-targets-6_4_2024-v24_03.tsv", show_col_types = FALSE, na = "No data")
 
-ot <- read_tsv("OT-MONDO_0004975-associated-targets-9_19_2024-v24_09.tsv", show_col_types = FALSE, na = "No data")
+#ot <- read_tsv("OT-MONDO_0004975-associated-targets-9_19_2024-v24_09.tsv", show_col_types = FALSE, na = "No data")
 
 ot
 ```
@@ -774,12 +774,12 @@ gostres$result %>% select(term_name, term_id, source, everything())
 gostplot(gostres, capped = FALSE, interactive = TRUE)
 ```
 
-### OpenTargets genes sorted by `otGeneticsPortal`
+### Agora genes sorted by `target_risk_score`
 
 ```{r}
-d6 <- otensg %>%
-  drop_na(otGeneticsPortal) %>%
-  arrange(desc(otGeneticsPortal))
+d6 <- ago %>%
+  drop_na(target_risk_score) %>%
+  arrange(desc(target_risk_score))
 
 d6
 ```
@@ -803,12 +803,12 @@ gostres$result %>% select(term_name, term_id, source, everything())
 gostplot(gostres, capped = FALSE, interactive = TRUE)
 ```
 
-### Agora genes sorted by `target_risk_score`
+### Agora genes sorted by `multi_omics_score`
 
 ```{r}
 d7 <- ago %>%
-  drop_na(target_risk_score) %>%
-  arrange(desc(target_risk_score))
+  drop_na(multi_omics_score) %>%
+  arrange(desc(multi_omics_score))
 
 d7
 ```
@@ -832,18 +832,49 @@ gostres$result %>% select(term_name, term_id, source, everything())
 gostplot(gostres, capped = FALSE, interactive = TRUE)
 ```
 
-### OpenTargets genes sorted by `globalScore`
+### OpenTargets genes sorted by `otGeneticsPortal`
 
 ```{r}
 d8 <- otensg %>%
-  drop_na(globalScore) %>%
-  arrange(desc(globalScore))
+  drop_na(otGeneticsPortal) %>%
+  arrange(desc(otGeneticsPortal))
 
 d8
 ```
 
 ```{r}
 query <- d8 %>% distinct(ensembl_gene_id) %>% pull(ensembl_gene_id)
+
+gostres <- gost(query = query,
+                organism = "hsapiens",
+                domain_scope = "annotated",
+                exclude_iea = TRUE,
+                ordered_query = TRUE,
+                significant = TRUE,
+                user_threshold = 0.005,
+                correction_method = "fdr")
+
+gostres$result %>% select(term_name, term_id, source, everything())
+```
+
+```{r}
+gostplot(gostres, capped = FALSE, interactive = TRUE)
+```
+
+
+
+### OpenTargets genes sorted by `globalScore`
+
+```{r}
+d9 <- otensg %>%
+  drop_na(globalScore) %>%
+  arrange(desc(globalScore))
+
+d9
+```
+
+```{r}
+query <- d9 %>% distinct(ensembl_gene_id) %>% pull(ensembl_gene_id)
 
 gostres <- gost(query = query,
                 organism = "hsapiens",
