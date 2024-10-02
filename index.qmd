@@ -892,6 +892,34 @@ gostres$result %>% select(term_name, term_id, source, everything())
 gostplot(gostres, capped = FALSE, interactive = TRUE)
 ```
 
+
+## Perform ORA of GVC genes sorted by # of studies
+
+```{r}
+d10 <- read_xlsx("2024-08-29_GVC Table 1C - WORKING COPY.xlsx", skip = 1)
+  
+d10
+```
+
+```{r}
+query <- d10 %>% distinct(`GVC expanded list of possible genes (500kb)`) %>% pull(`GVC expanded list of possible genes (500kb)`)
+
+gostres <- gost(query = query,
+                organism = "hsapiens",
+                domain_scope = "annotated",
+                exclude_iea = TRUE,
+                ordered_query = TRUE,
+                significant = TRUE,
+                user_threshold = 0.005,
+                correction_method = "fdr")
+
+gostres$result %>% select(term_name, term_id, source, everything())
+```
+
+```{r}
+gostplot(gostres, capped = FALSE, interactive = TRUE)
+```
+
 ## Check missing OpenTargets scores in Brian's table
 
 ```{r}
