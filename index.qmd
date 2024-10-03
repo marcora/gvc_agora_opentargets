@@ -896,13 +896,17 @@ gostplot(gostres, capped = FALSE, interactive = TRUE)
 ## Perform ORA of GVC genes sorted by # of studies
 
 ```{r}
-d10 <- read_xlsx("2024-08-29_GVC Table 1C - WORKING COPY.xlsx", skip = 1)
+d10 <- read_xlsx("2024-08-29_GVC Table 1C - WORKING COPY.xlsx", sheet = "PG Gene List", skip = 1)
   
 d10
 ```
 
 ```{r}
-query <- d10 %>% distinct(`GVC expanded list of possible genes (500kb)`) %>% pull(`GVC expanded list of possible genes (500kb)`)
+query <-
+  d10 %>%
+  arrange(ORDER) %>%
+  distinct(`GVC expanded list of possible genes (500kb)`) %>%
+  pull(`GVC expanded list of possible genes (500kb)`)
 
 gostres <- gost(query = query,
                 organism = "hsapiens",
