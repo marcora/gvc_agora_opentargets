@@ -100,7 +100,7 @@ otensg
 
 ## Correlation of Agora and OpenTargets scores
 
-## GVC genes only
+### GVC genes
 
 ```{r}
 d.cor <- gvc.genes %>%
@@ -716,37 +716,6 @@ gostres$result %>% select(term_name, term_id, source, everything())
 gostplot(gostres, capped = FALSE, interactive = TRUE)
 ```
 
-## GVC loci annotated with genes in overlaps
-
-### GVC ∩ Agora ∩ OpenTargets
-
-```{r}
-gene_ids <- p %>% 
-  filter(..set.. == "GVC∩Agora∩OpenTargets") %>%
-  unnest(..values..) %>%
-  select(gene_id = ..values..) %>%
-  left_join(ago, by = join_by(gene_id == ensembl_gene_id)) %>% 
-  left_join(otensg, by = join_by(gene_id == ensembl_gene_id)) %>%
-  distinct(gene_id) %>%
-  pull(gene_id)
-
-length(gene_ids)
-```
-
-```{r}
-gvc %>%
-  filter(gene_id %in% gene_ids) %>%
-  select(gvc_locus = grouped_loci_gvc, gene_id, gene_symbol) %>%
-  arrange(gene_symbol) %>%
-  mutate(gene = gene_symbol) %>%
-  # unite(gene, gene_id, gene_symbol, sep = ":", remove = FALSE) %>%
-  distinct(gvc_locus, gene, .keep_all = TRUE) %>%
-  group_by(gvc_locus) %>%
-  summarize(genes = str_c(gene, collapse = " | ")) %>%
-  select(gvc_locus, genes) %>%
-  gt::gt()
-```
-
 ## ORA of Agora and OpenTargets genes sorted by global or genetic score
 
 ### Agora genes sorted by `genetics_score`
@@ -899,7 +868,7 @@ gostres$result %>% select(term_name, term_id, source, everything())
 gostplot(gostres, capped = FALSE, interactive = TRUE)
 ```
 
-## ORA of GVC genes
+## ORA of GVC genes in table from manuscript
 
 ```{r}
 d10 <- read_xlsx("2024-08-29_GVC Table 1C - WORKING COPY.xlsx", sheet = "PG Gene List", skip = 1)
@@ -932,7 +901,7 @@ gostres$result %>% select(term_name, term_id, source, everything())
 gostplot(gostres, capped = FALSE, interactive = TRUE)
 ```
 
-## Check missing OpenTargets scores in Brian's table
+## Check missing OpenTargets scores in table from manuscript
 
 ```{r}
 t <- read_xlsx("8-23-2024 - GVC Table 1C - WORKING COPYL_MRC.xlsx", skip = 1, na = "No data") |> janitor::clean_names() |> select(gvc_expanded_list_of_possible_genes_500kb, open_target_scores_global, open_target_scores_genetics) |> rename(symbol = gvc_expanded_list_of_possible_genes_500kb)
@@ -952,7 +921,38 @@ t |>
   select(symbol, open_target_scores_genetics, otGeneticsPortal)
 ```
 
-## Methods
+## GVC loci annotated with genes in overlaps
+
+### GVC ∩ Agora ∩ OpenTargets
+
+```{r}
+gene_ids <- p %>% 
+  filter(..set.. == "GVC∩Agora∩OpenTargets") %>%
+  unnest(..values..) %>%
+  select(gene_id = ..values..) %>%
+  left_join(ago, by = join_by(gene_id == ensembl_gene_id)) %>% 
+  left_join(otensg, by = join_by(gene_id == ensembl_gene_id)) %>%
+  distinct(gene_id) %>%
+  pull(gene_id)
+
+length(gene_ids)
+```
+
+```{r}
+gvc %>%
+  filter(gene_id %in% gene_ids) %>%
+  select(gvc_locus = grouped_loci_gvc, gene_id, gene_symbol) %>%
+  arrange(gene_symbol) %>%
+  mutate(gene = gene_symbol) %>%
+  # unite(gene, gene_id, gene_symbol, sep = ":", remove = FALSE) %>%
+  distinct(gvc_locus, gene, .keep_all = TRUE) %>%
+  group_by(gvc_locus) %>%
+  summarize(genes = str_c(gene, collapse = " | ")) %>%
+  select(gvc_locus, genes) %>%
+  gt::gt()
+```
+
+## Methods for manuscript
 
 **Phase 2. Pathway analysis of GVC, Agora and OpenTargets candidate AD genes.** We conducted gene set over-representation analysis (ORA) of GVC, Agora and OpenTargets candidate AD gene lists using R\[37\] with the `gprofiler2` package (see [https://github.com/marcoralab/gvc_agora_opentargets](https://github.com/marcoralab/gvc_agora_opentargets.ora)), excluding electronic Gene Ontology (GO) annotations, and filtering results using a p-value significance threshold of 0.005 after multiple testing correction with the g:SCS algorithm.
 
