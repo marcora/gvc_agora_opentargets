@@ -204,7 +204,7 @@ genes <- p %>%
   left_join(otensg, by = join_by(gene_id == ensembl_gene_id)) %>%
   sample_frac(1L) %>% # randomize row order before arranging
   select(gene_id, symbol, genetics_score, otGeneticsPortal, globalScore, target_risk_score, multi_omics_score) %>%
-  arrange(desc(genetics_score), desc(otGeneticsPortal))
+  arrange(desc(genetics_score), desc(otGeneticsPortal), desc(target_risk_score), desc(globalScore))
 
 genes
 ```
@@ -244,7 +244,7 @@ genes <- p %>%
   left_join(otensg, by = join_by(gene_id == ensembl_gene_id)) %>% 
   sample_frac(1L) %>% # randomize row order before arranging
   select(gene_id, symbol, genetics_score, otGeneticsPortal, globalScore, target_risk_score, multi_omics_score) %>%
-  arrange(desc(genetics_score), desc(otGeneticsPortal))
+  arrange(desc(genetics_score), desc(otGeneticsPortal), desc(target_risk_score), desc(globalScore))
 
 genes
 ```
@@ -279,7 +279,7 @@ genes <- p %>%
   left_join(otensg, by = join_by(gene_id == ensembl_gene_id)) %>% 
   sample_frac(1L) %>% # randomize row order before arranging
   select(gene_id, symbol, genetics_score, otGeneticsPortal, globalScore, target_risk_score, multi_omics_score) %>%
-  arrange(desc(genetics_score), desc(otGeneticsPortal))
+  arrange(desc(genetics_score), desc(otGeneticsPortal), desc(target_risk_score), desc(globalScore))
 
 genes
 ```
@@ -314,7 +314,7 @@ genes <- p %>%
   left_join(otensg, by = join_by(gene_id == ensembl_gene_id)) %>% 
   sample_frac(1L) %>% # randomize row order before arranging
   select(gene_id, symbol, genetics_score, otGeneticsPortal, globalScore, target_risk_score, multi_omics_score) %>%
-  arrange(desc(genetics_score), desc(otGeneticsPortal))
+  arrange(desc(genetics_score), desc(otGeneticsPortal), desc(target_risk_score), desc(globalScore))
 
 genes
 ```
@@ -349,7 +349,7 @@ genes <- p %>%
   left_join(otensg, by = join_by(gene_id == ensembl_gene_id)) %>% 
   sample_frac(1L) %>% # randomize row order before arranging
   select(gene_id, symbol, genetics_score, otGeneticsPortal, globalScore, target_risk_score, multi_omics_score) %>%
-  arrange(desc(genetics_score), desc(otGeneticsPortal))
+  arrange(desc(genetics_score), desc(otGeneticsPortal), desc(target_risk_score), desc(globalScore))
 
 genes
 ```
@@ -384,7 +384,7 @@ genes <- p %>%
   left_join(otensg, by = join_by(gene_id == ensembl_gene_id)) %>% 
   sample_frac(1L) %>% # randomize row order before arranging
   select(gene_id, symbol, genetics_score, otGeneticsPortal, globalScore, target_risk_score, multi_omics_score) %>%
-  arrange(desc(genetics_score), desc(otGeneticsPortal))
+  arrange(desc(genetics_score), desc(otGeneticsPortal), desc(target_risk_score), desc(globalScore))
 
 genes
 ```
@@ -419,7 +419,7 @@ genes <- p %>%
   left_join(otensg, by = join_by(gene_id == ensembl_gene_id)) %>% 
   sample_frac(1L) %>% # randomize row order before arranging
   select(gene_id, symbol, genetics_score, otGeneticsPortal, globalScore, target_risk_score, multi_omics_score) %>%
-  arrange(desc(genetics_score), desc(otGeneticsPortal))
+  arrange(desc(genetics_score), desc(otGeneticsPortal), desc(target_risk_score), desc(globalScore))
 
 genes
 ```
@@ -454,7 +454,7 @@ genes <- p %>%
   left_join(otensg, by = join_by(gene_id == ensembl_gene_id)) %>% 
   sample_frac(1L) %>% # randomize row order before arranging
   select(gene_id, symbol, genetics_score, otGeneticsPortal, globalScore, target_risk_score, multi_omics_score) %>%
-  arrange(desc(genetics_score), desc(otGeneticsPortal))
+  arrange(desc(genetics_score), desc(otGeneticsPortal), desc(target_risk_score), desc(globalScore))
 
 genes
 ```
@@ -489,7 +489,7 @@ genes <- p %>%
   left_join(otensg, by = join_by(gene_id == ensembl_gene_id)) %>% 
   sample_frac(1L) %>% # randomize row order before arranging
   select(gene_id, symbol, genetics_score, otGeneticsPortal, globalScore, target_risk_score, multi_omics_score) %>%
-  arrange(desc(genetics_score), desc(otGeneticsPortal))
+  arrange(desc(genetics_score), desc(otGeneticsPortal), desc(target_risk_score), desc(globalScore))
 
 genes
 ```
@@ -524,7 +524,7 @@ genes <- p %>%
   left_join(otensg, by = join_by(gene_id == ensembl_gene_id)) %>% 
   sample_frac(1L) %>% # randomize row order before arranging
   select(gene_id, symbol, genetics_score, otGeneticsPortal, globalScore, target_risk_score, multi_omics_score) %>%
-  arrange(desc(genetics_score), desc(otGeneticsPortal))
+  arrange(desc(genetics_score), desc(otGeneticsPortal), desc(target_risk_score), desc(globalScore))
 
 genes
 ```
@@ -559,7 +559,7 @@ genes <- p %>%
   left_join(otensg, by = join_by(gene_id == ensembl_gene_id)) %>% 
   sample_frac(1L) %>% # randomize row order before arranging
   select(gene_id, symbol, genetics_score, otGeneticsPortal, globalScore, target_risk_score, multi_omics_score) %>%
-  arrange(desc(genetics_score), desc(otGeneticsPortal))
+  arrange(desc(genetics_score), desc(otGeneticsPortal), desc(target_risk_score), desc(globalScore))
 
 genes
 ```
@@ -913,20 +913,20 @@ gostplot(gostres, capped = FALSE, interactive = TRUE)
 ## Check missing OpenTargets scores in table from manuscript
 
 ```{r}
-t <- read_xlsx("8-23-2024 - GVC Table 1C - WORKING COPYL_MRC.xlsx", skip = 1, na = "No data") |> janitor::clean_names() |> select(gvc_expanded_list_of_possible_genes_500kb, open_target_scores_global, open_target_scores_genetics) |> rename(symbol = gvc_expanded_list_of_possible_genes_500kb)
+t <- read_xlsx("8-23-2024 - GVC Table 1C - WORKING COPYL_MRC.xlsx", skip = 1, na = "No data") %>% janitor::clean_names() %>% select(gvc_expanded_list_of_possible_genes_500kb, open_target_scores_global, open_target_scores_genetics) %>% rename(symbol = gvc_expanded_list_of_possible_genes_500kb)
 ```
 
 ```{r}
-t |>
-  left_join(ot, by = "symbol") |>
-  filter(round(open_target_scores_global, 4) != round(globalScore, 4)) |> 
+t %>%
+  left_join(ot, by = "symbol") %>%
+  filter(round(open_target_scores_global, 4) != round(globalScore, 4)) %>% 
   select(symbol, open_target_scores_global, globalScore)
 ```
 
 ```{r}
-t |>
-  left_join(ot, by = "symbol") |>
-  filter(round(open_target_scores_genetics, 4) != round(otGeneticsPortal, 4)) |> 
+t %>%
+  left_join(ot, by = "symbol") %>%
+  filter(round(open_target_scores_genetics, 4) != round(otGeneticsPortal, 4)) %>% 
   select(symbol, open_target_scores_genetics, otGeneticsPortal)
 ```
 
