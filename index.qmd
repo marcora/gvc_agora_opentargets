@@ -46,6 +46,10 @@ gvc.genes <- gvc %>% distinct(gene_id, .keep_all = TRUE) %>% select(gene_id, gen
 gvc.genes
 ```
 
+```{r}
+gvc.genes %>% distinct(gene_symbol) %>% nrow()
+```
+
 ### Agora
 
 Alzheimer's disease gene prioritization scores from [Agora](https://www.synapse.org/Synapse:syn25741025) (see also related [journal article](https://alz-journals.onlinelibrary.wiley.com/doi/10.1002/trc2.12461)):
