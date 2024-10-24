@@ -11,7 +11,7 @@ execute:
 ## TODO
 
 - [ ] Redo ORA of GVC genes excluding MHC and APOE locus genes
-- [ ] Summarize ORA results using `enrichplot` or similar tools
+- [ ] Summarize ORA results using `enrichplot`, `clusterProfiler`, or similar tools
 
 ## Setup environment
 
