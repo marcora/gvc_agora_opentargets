@@ -98,7 +98,9 @@ otensg <- gconvert(
 otensg
 ```
 
-## Correlation of Agora and OpenTargets scores (GVC genes only)
+## Correlation of Agora and OpenTargets scores
+
+## GVC genes only
 
 ```{r}
 d.cor <- gvc.genes %>%
@@ -126,7 +128,7 @@ d.cor %>% drop_na(target_risk_score, globalScore) %>%
   unnest(cor)
 ```
 
-## Correlation of Agora and OpenTargets scores (all genes)
+### All genes
 
 ```{r}
 d.cor <- ago %>% 
@@ -583,7 +585,7 @@ d1 <- gvc.genes %>%
   left_join(ago, by = join_by(gene_id == ensembl_gene_id)) %>% 
   left_join(otensg, by = join_by(gene_id == ensembl_gene_id)) %>% 
   sample_frac(1L) %>% # randomize row order before arranging
-  arrange(desc(genetics_score), desc(otGeneticsPortal)) %>% 
+  arrange(desc(genetics_score), desc(otGeneticsPortal), desc(target_risk_score), desc(globalScore)) %>% 
   select(-c(symbol, hgnc_symbol)) %>% 
   select(gene_id, gene_symbol, genetics_score, otGeneticsPortal, everything())
 
@@ -618,7 +620,7 @@ d2 <- gvc.genes %>%
   left_join(ago, by = join_by(gene_id == ensembl_gene_id)) %>% 
   left_join(otensg, by = join_by(gene_id == ensembl_gene_id)) %>% 
   sample_frac(1L) %>% # randomize row order before arranging
-  arrange(desc(otGeneticsPortal), desc(genetics_score)) %>% 
+  arrange(desc(otGeneticsPortal), desc(genetics_score), desc(globalScore), desc(target_risk_score)) %>%
   select(-c(symbol, hgnc_symbol)) %>% 
   select(gene_id, gene_symbol, otGeneticsPortal, genetics_score, everything())
 
