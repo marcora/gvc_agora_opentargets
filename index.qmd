@@ -8,6 +8,11 @@ execute:
   warning: false
 ---
 
+## TODO
+
+- [ ] Redo ORA of GVC genes excluding MHC and APOE locus genes
+- [ ] Summarize ORA results using `enrichplot` or similar tools
+
 ## Setup environment
 
 ```{r}
