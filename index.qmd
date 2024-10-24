@@ -752,6 +752,7 @@ gvc %>%
 ```{r}
 d5 <- ago %>%
   drop_na(genetics_score) %>%
+  sample_frac(1L) %>% # randomize row order before arranging
   arrange(desc(genetics_score))
 
 d5
@@ -781,6 +782,7 @@ gostplot(gostres, capped = FALSE, interactive = TRUE)
 ```{r}
 d6 <- ago %>%
   drop_na(target_risk_score) %>%
+  sample_frac(1L) %>% # randomize row order before arranging
   arrange(desc(target_risk_score))
 
 d6
@@ -810,6 +812,7 @@ gostplot(gostres, capped = FALSE, interactive = TRUE)
 ```{r}
 d7 <- ago %>%
   drop_na(multi_omics_score) %>%
+  sample_frac(1L) %>% # randomize row order before arranging
   arrange(desc(multi_omics_score))
 
 d7
@@ -839,6 +842,7 @@ gostplot(gostres, capped = FALSE, interactive = TRUE)
 ```{r}
 d8 <- otensg %>%
   drop_na(otGeneticsPortal) %>%
+  sample_frac(1L) %>% # randomize row order before arranging
   arrange(desc(otGeneticsPortal))
 
 d8
@@ -868,6 +872,7 @@ gostplot(gostres, capped = FALSE, interactive = TRUE)
 ```{r}
 d9 <- otensg %>%
   drop_na(globalScore) %>%
+  sample_frac(1L) %>% # randomize row order before arranging
   arrange(desc(globalScore))
 
 d9
@@ -913,7 +918,7 @@ gostres <- gost(query = query,
                 organism = "hsapiens",
                 domain_scope = "annotated",
                 exclude_iea = TRUE,
-                ordered_query = FALSE, # <-
+                ordered_query = FALSE, # <- UNORDERED QUERY!
                 significant = TRUE,
                 user_threshold = 0.005,
                 correction_method = "gSCS")
