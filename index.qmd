@@ -107,7 +107,7 @@ otensg <- gconvert(
 otensg
 ```
 
-## Correlation of Agora and OpenTargets scores
+## Correlation between Agora and OpenTargets scores
 
 ### GVC genes
 
@@ -583,7 +583,34 @@ gostres$result %>% select(term_name, term_id, source, everything())
 gostplot(gostres, capped = FALSE, interactive = TRUE)
 ```
 
-## ORA of GVC genes sorted by Agora or OpenTargets scores
+## ORA of GVC genes
+
+### GVC genes unsorted/unfiltered
+
+```{r}
+d0 <- gvc.genes %>% select(gene_id, gene_symbol)
+
+d0
+```
+
+```{r}
+query <- d0 %>% distinct(gene_id) %>% pull(gene_id)
+
+gostres <- gost(query = query,
+                organism = "hsapiens",
+                domain_scope = "annotated",
+                exclude_iea = TRUE,
+                ordered_query = FALSE, # <- UNORDERED QUERY!
+                significant = TRUE,
+                user_threshold = 0.005,
+                correction_method = "gSCS")
+
+gostres$result %>% select(term_name, term_id, source, everything())
+```
+
+```{r}
+gostplot(gostres, capped = FALSE, interactive = TRUE)
+```
 
 ### GVC genes sorted by Agora's `genetics_score`
 
@@ -725,7 +752,7 @@ gostres$result %>% select(term_name, term_id, source, everything())
 gostplot(gostres, capped = FALSE, interactive = TRUE)
 ```
 
-## ORA of Agora and OpenTargets genes sorted by global or genetic score
+## ORA of Agora genes
 
 ### Agora genes sorted by `genetics_score`
 
@@ -817,6 +844,8 @@ gostres$result %>% select(term_name, term_id, source, everything())
 gostplot(gostres, capped = FALSE, interactive = TRUE)
 ```
 
+## ORA of OpenTargets genes
+
 ### OpenTargets genes sorted by `otGeneticsPortal`
 
 ```{r}
@@ -881,16 +910,13 @@ gostplot(gostres, capped = FALSE, interactive = TRUE)
 
 ```{r}
 d10 <- read_xlsx("2024-08-29_GVC Table 1C - WORKING COPY.xlsx", sheet = "PG Gene List", skip = 1)
-  
-d10 %>% arrange(`PG RANK`)
 ```
 
 ```{r}
 query <-
   d10 %>%
-  rename(gene = `GVC expanded list of possible genes (500kb)`, rank = `PG RANK`) %>%
-  bind_rows(tibble(gene = "APOE", rank = 0)) %>%
-  arrange(rank) %>%
+  rename(gene = `GVC expanded list of possible genes (500kb)`) %>%
+  bind_rows(tibble(gene = "APOE")) %>%
   distinct(gene) %>%
   pull(gene)
 
