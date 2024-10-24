@@ -98,6 +98,61 @@ otensg <- gconvert(
 otensg
 ```
 
+## Correlation of Agora and OpenTargets scores (GVC genes only)
+
+```{r}
+d.cor <- gvc.genes %>%
+  left_join(ago, by = join_by(gene_id == ensembl_gene_id)) %>% 
+  left_join(otensg, by = join_by(gene_id == ensembl_gene_id))
+```
+
+```{r}
+d.cor %>% nrow()
+
+d.cor %>% drop_na(genetics_score, otGeneticsPortal) %>% nrow()
+
+d.cor %>% drop_na(genetics_score, otGeneticsPortal) %>%
+  summarize(cor = tidy(cor.test(genetics_score, otGeneticsPortal, method="kendall"))) %>%
+  unnest(cor)
+```
+
+```{r}
+d.cor %>% nrow()
+
+d.cor %>% drop_na(target_risk_score, globalScore) %>% nrow()
+
+d.cor %>% drop_na(target_risk_score, globalScore) %>%
+  summarize(cor = tidy(cor.test(target_risk_score, globalScore, method="kendall"))) %>%
+  unnest(cor)
+```
+
+## Correlation of Agora and OpenTargets scores (all genes)
+
+```{r}
+d.cor <- ago %>% 
+  left_join(otensg, by = "ensembl_gene_id")
+```
+
+```{r}
+d.cor %>% nrow()
+
+d.cor %>% drop_na(genetics_score, otGeneticsPortal) %>% nrow()
+
+d.cor %>% drop_na(genetics_score, otGeneticsPortal) %>%
+  summarize(cor = tidy(cor.test(genetics_score, otGeneticsPortal, method="kendall"))) %>%
+  unnest(cor)
+```
+
+```{r}
+d.cor %>% nrow()
+
+d.cor %>% drop_na(target_risk_score, globalScore) %>% nrow()
+
+d.cor %>% drop_na(target_risk_score, globalScore) %>%
+  summarize(cor = tidy(cor.test(target_risk_score, globalScore, method="kendall"))) %>%
+  unnest(cor)
+```
+
 ## Overlaps between GVC, Agora, and OpenTargets genes
 
 ```{r}
@@ -125,7 +180,7 @@ p <- get.venn.partitions(x)
 p
 ```
 
-## Perform ORA of genes in overlaps
+## ORA of genes in overlaps
 
 ### GVC ∩ Agora ∩ OpenTargets
 
@@ -517,7 +572,7 @@ gostres$result %>% select(term_name, term_id, source, everything())
 gostplot(gostres, capped = FALSE, interactive = TRUE)
 ```
 
-## Perform ORA of GVC genes sorted by Agora or OpenTargets scores
+## ORA of GVC genes sorted by Agora or OpenTargets scores
 
 ### GVC genes sorted by Agora's `genetics_score`
 
@@ -659,61 +714,6 @@ gostres$result %>% select(term_name, term_id, source, everything())
 gostplot(gostres, capped = FALSE, interactive = TRUE)
 ```
 
-## Correlation of Agora and OpenTargets scores (GVC genes only)
-
-```{r}
-d.cor <- gvc.genes %>%
-  left_join(ago, by = join_by(gene_id == ensembl_gene_id)) %>% 
-  left_join(otensg, by = join_by(gene_id == ensembl_gene_id))
-```
-
-```{r}
-d.cor %>% nrow()
-
-d.cor %>% drop_na(genetics_score, otGeneticsPortal) %>% nrow()
-
-d.cor %>% drop_na(genetics_score, otGeneticsPortal) %>%
-  summarize(cor = tidy(cor.test(genetics_score, otGeneticsPortal, method="kendall"))) %>%
-  unnest(cor)
-```
-
-```{r}
-d.cor %>% nrow()
-
-d.cor %>% drop_na(target_risk_score, globalScore) %>% nrow()
-
-d.cor %>% drop_na(target_risk_score, globalScore) %>%
-  summarize(cor = tidy(cor.test(target_risk_score, globalScore, method="kendall"))) %>%
-  unnest(cor)
-```
-
-## Correlation of Agora and OpenTargets scores (all genes)
-
-```{r}
-d.cor <- ago %>% 
-  left_join(otensg, by = "ensembl_gene_id")
-```
-
-```{r}
-d.cor %>% nrow()
-
-d.cor %>% drop_na(genetics_score, otGeneticsPortal) %>% nrow()
-
-d.cor %>% drop_na(genetics_score, otGeneticsPortal) %>%
-  summarize(cor = tidy(cor.test(genetics_score, otGeneticsPortal, method="kendall"))) %>%
-  unnest(cor)
-```
-
-```{r}
-d.cor %>% nrow()
-
-d.cor %>% drop_na(target_risk_score, globalScore) %>% nrow()
-
-d.cor %>% drop_na(target_risk_score, globalScore) %>%
-  summarize(cor = tidy(cor.test(target_risk_score, globalScore, method="kendall"))) %>%
-  unnest(cor)
-```
-
 ## GVC loci annotated with genes in overlaps
 
 ### GVC ∩ Agora ∩ OpenTargets
@@ -745,7 +745,7 @@ gvc %>%
   gt::gt()
 ```
 
-## Perform ORA of Agora and OpenTargets genes sorted by global or genetic score
+## ORA of Agora and OpenTargets genes sorted by global or genetic score
 
 ### Agora genes sorted by `genetics_score`
 
@@ -897,7 +897,7 @@ gostres$result %>% select(term_name, term_id, source, everything())
 gostplot(gostres, capped = FALSE, interactive = TRUE)
 ```
 
-## Perform ORA of GVC genes
+## ORA of GVC genes
 
 ```{r}
 d10 <- read_xlsx("2024-08-29_GVC Table 1C - WORKING COPY.xlsx", sheet = "PG Gene List", skip = 1)
