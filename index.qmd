@@ -55,6 +55,24 @@ gvc.genes
 gvc.genes %>% distinct(gene_symbol) %>% nrow()
 ```
 
+Remove genes in APOE and HLA loci:
+
+```{r}
+gvc.minus_apoe_hla <- gvc %>% filter(grouped_loci_gvc != "APOE / TOMM40" & grouped_loci_gvc != "HLA")
+```
+
+```{r}
+gvc.genes.minus_apoe_hla <- gvc.minus_apoe_hla %>% distinct(gene_id, .keep_all = TRUE) %>% select(gene_id, gene_symbol) %>% arrange(gene_symbol)
+
+gvc.genes.minus_apoe_hla
+```
+
+```{r}
+gvc.genes.minus_apoe_hla %>% distinct(gene_symbol) %>% nrow()
+```
+
+
+
 ### Agora
 
 Alzheimer's disease gene prioritization scores from [Agora](https://www.synapse.org/Synapse:syn25741025) (see also related [journal article](https://alz-journals.onlinelibrary.wiley.com/doi/10.1002/trc2.12461)):
@@ -595,6 +613,33 @@ d0
 
 ```{r}
 query <- d0 %>% distinct(gene_id) %>% pull(gene_id)
+
+gostres <- gost(query = query,
+                organism = "hsapiens",
+                domain_scope = "annotated",
+                exclude_iea = TRUE,
+                ordered_query = FALSE, # <- UNORDERED QUERY!
+                significant = TRUE,
+                user_threshold = 0.005,
+                correction_method = "gSCS")
+
+gostres$result %>% select(term_name, term_id, source, everything())
+```
+
+```{r}
+gostplot(gostres, capped = FALSE, interactive = TRUE)
+```
+
+### GVC genes unsorted/unfiltered minus genes in APOE and HLA loci
+
+```{r}
+d0.minus_apoe_hla <- gvc.genes.minus_apoe_hla %>% select(gene_id, gene_symbol)
+
+d0.minus_apoe_hla
+```
+
+```{r}
+query <- d0.minus_apoe_hla %>% distinct(gene_id) %>% pull(gene_id)
 
 gostres <- gost(query = query,
                 organism = "hsapiens",
