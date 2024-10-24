@@ -51,15 +51,17 @@ gvc.genes
 Alzheimer's disease gene prioritization scores from [Agora](https://www.synapse.org/Synapse:syn25741025) (see also related [journal article](https://alz-journals.onlinelibrary.wiley.com/doi/10.1002/trc2.12461)):
 
 ```{r}
-ago1 <- read_json("syn25741025.overall_scores.json", simplifyVector = TRUE) %>% as_tibble()
+ago1 <- read_json("agora.syn25741025.overall_scores.v12.2024-10-24.json", simplifyVector = TRUE) %>% as_tibble()
 
 ago1
 ```
 
-Alzheimer's disease genes (AMPAD Agora) from Fanny:
+Alzheimer's disease genes (Agora nominated targets):
+
+https://agora.adknowledgeportal.org/genes/nominated-targets
 
 ```{r}
-ago2 <- read_csv("AMPAD_agora_032124_gene-list.csv")
+ago2 <- read_csv("agora.nominated-targets.gene-list.2024-10-24.csv")
 ago2
 ```
 
@@ -72,9 +74,9 @@ ago <- ago1 %>% filter(hgnc_symbol %in% ago2$`Gene Symbol`)
 Alzheimer's disease gene prioritization scores from [OpenTargets](https://platform.opentargets.org/disease/MONDO_0004975/associations):
 
 ```{r}
-ot <- read_tsv("OT-MONDO_0004975-associated-targets-6_4_2024-v24_03.tsv", show_col_types = FALSE, na = "No data")
+# ot <- read_tsv("OT-MONDO_0004975-associated-targets-6_4_2024-v24_03.tsv", show_col_types = FALSE, na = "No data")
 
-#ot <- read_tsv("OT-MONDO_0004975-associated-targets-9_19_2024-v24_09.tsv", show_col_types = FALSE, na = "No data")
+ot <- read_tsv("OT-MONDO_0004975-associated-targets-10_24_2024-v24_09.tsv", show_col_types = FALSE, na = "No data")
 
 ot
 ```
@@ -151,7 +153,7 @@ gostres <- gost(query = query,
                 ordered_query = TRUE,
                 significant = TRUE,
                 user_threshold = 0.005,
-                correction_method = "fdr")
+                correction_method = "gSCS")
 
 gostres$result %>% select(term_name, term_id, source, everything())
 ```
@@ -191,7 +193,7 @@ gostres <- gost(query = query,
                 ordered_query = TRUE,
                 significant = TRUE,
                 user_threshold = 0.005,
-                correction_method = "fdr")
+                correction_method = "gSCS")
 
 gostres$result %>% select(term_name, term_id, source, everything())
 ```
@@ -226,7 +228,7 @@ gostres <- gost(query = query,
                 ordered_query = TRUE,
                 significant = TRUE,
                 user_threshold = 0.005,
-                correction_method = "fdr")
+                correction_method = "gSCS")
 
 gostres$result %>% select(term_name, term_id, source, everything())
 ```
@@ -261,7 +263,7 @@ gostres <- gost(query = query,
                 ordered_query = TRUE,
                 significant = TRUE,
                 user_threshold = 0.005,
-                correction_method = "fdr")
+                correction_method = "gSCS")
 
 gostres$result %>% select(term_name, term_id, source, everything())
 ```
@@ -296,7 +298,7 @@ gostres <- gost(query = query,
                 ordered_query = TRUE,
                 significant = TRUE,
                 user_threshold = 0.005,
-                correction_method = "fdr")
+                correction_method = "gSCS")
 
 gostres$result %>% select(term_name, term_id, source, everything())
 ```
@@ -331,7 +333,7 @@ gostres <- gost(query = query,
                 ordered_query = TRUE,
                 significant = TRUE,
                 user_threshold = 0.005,
-                correction_method = "fdr")
+                correction_method = "gSCS")
 
 gostres$result %>% select(term_name, term_id, source, everything())
 ```
@@ -366,7 +368,7 @@ gostres <- gost(query = query,
                 ordered_query = TRUE,
                 significant = TRUE,
                 user_threshold = 0.005,
-                correction_method = "fdr")
+                correction_method = "gSCS")
 
 gostres$result %>% select(term_name, term_id, source, everything())
 ```
@@ -401,7 +403,7 @@ gostres <- gost(query = query,
                 ordered_query = TRUE,
                 significant = TRUE,
                 user_threshold = 0.005,
-                correction_method = "fdr")
+                correction_method = "gSCS")
 
 gostres$result %>% select(term_name, term_id, source, everything())
 ```
@@ -436,7 +438,7 @@ gostres <- gost(query = query,
                 ordered_query = TRUE,
                 significant = TRUE,
                 user_threshold = 0.005,
-                correction_method = "fdr")
+                correction_method = "gSCS")
 
 gostres$result %>% select(term_name, term_id, source, everything())
 ```
@@ -471,7 +473,7 @@ gostres <- gost(query = query,
                 ordered_query = TRUE,
                 significant = TRUE,
                 user_threshold = 0.005,
-                correction_method = "fdr")
+                correction_method = "gSCS")
 
 gostres$result %>% select(term_name, term_id, source, everything())
 ```
@@ -506,7 +508,7 @@ gostres <- gost(query = query,
                 ordered_query = TRUE,
                 significant = TRUE,
                 user_threshold = 0.005,
-                correction_method = "fdr")
+                correction_method = "gSCS")
 
 gostres$result %>% select(term_name, term_id, source, everything())
 ```
@@ -543,7 +545,7 @@ gostres <- gost(query = query,
                 ordered_query = TRUE,
                 significant = TRUE,
                 user_threshold = 0.005,
-                correction_method = "fdr")
+                correction_method = "gSCS")
 
 gostres$result %>% select(term_name, term_id, source, everything())
 ```
@@ -578,7 +580,7 @@ gostres <- gost(query = query,
                 ordered_query = TRUE,
                 significant = TRUE,
                 user_threshold = 0.005,
-                correction_method = "fdr")
+                correction_method = "gSCS")
 
 gostres$result %>% select(term_name, term_id, source, everything())
 ```
@@ -613,7 +615,7 @@ gostres <- gost(query = query,
                 ordered_query = TRUE,
                 significant = TRUE,
                 user_threshold = 0.005,
-                correction_method = "fdr")
+                correction_method = "gSCS")
 
 gostres$result %>% select(term_name, term_id, source, everything())
 ```
@@ -648,7 +650,7 @@ gostres <- gost(query = query,
                 ordered_query = TRUE,
                 significant = TRUE,
                 user_threshold = 0.005,
-                correction_method = "fdr")
+                correction_method = "gSCS")
 
 gostres$result %>% select(term_name, term_id, source, everything())
 ```
@@ -765,7 +767,7 @@ gostres <- gost(query = query,
                 ordered_query = TRUE,
                 significant = TRUE,
                 user_threshold = 0.005,
-                correction_method = "fdr")
+                correction_method = "gSCS")
 
 gostres$result %>% select(term_name, term_id, source, everything())
 ```
@@ -794,7 +796,7 @@ gostres <- gost(query = query,
                 ordered_query = TRUE,
                 significant = TRUE,
                 user_threshold = 0.005,
-                correction_method = "fdr")
+                correction_method = "gSCS")
 
 gostres$result %>% select(term_name, term_id, source, everything())
 ```
@@ -823,7 +825,7 @@ gostres <- gost(query = query,
                 ordered_query = TRUE,
                 significant = TRUE,
                 user_threshold = 0.005,
-                correction_method = "fdr")
+                correction_method = "gSCS")
 
 gostres$result %>% select(term_name, term_id, source, everything())
 ```
@@ -852,7 +854,7 @@ gostres <- gost(query = query,
                 ordered_query = TRUE,
                 significant = TRUE,
                 user_threshold = 0.005,
-                correction_method = "fdr")
+                correction_method = "gSCS")
 
 gostres$result %>% select(term_name, term_id, source, everything())
 ```
@@ -860,8 +862,6 @@ gostres$result %>% select(term_name, term_id, source, everything())
 ```{r}
 gostplot(gostres, capped = FALSE, interactive = TRUE)
 ```
-
-
 
 ### OpenTargets genes sorted by `globalScore`
 
@@ -883,7 +883,7 @@ gostres <- gost(query = query,
                 ordered_query = TRUE,
                 significant = TRUE,
                 user_threshold = 0.005,
-                correction_method = "fdr")
+                correction_method = "gSCS")
 
 gostres$result %>% select(term_name, term_id, source, everything())
 ```
@@ -892,8 +892,7 @@ gostres$result %>% select(term_name, term_id, source, everything())
 gostplot(gostres, capped = FALSE, interactive = TRUE)
 ```
 
-
-## Perform ORA of GVC genes sorted by # of studies
+## Perform ORA of GVC genes
 
 ```{r}
 d10 <- read_xlsx("2024-08-29_GVC Table 1C - WORKING COPY.xlsx", sheet = "PG Gene List", skip = 1)
@@ -914,10 +913,10 @@ gostres <- gost(query = query,
                 organism = "hsapiens",
                 domain_scope = "annotated",
                 exclude_iea = TRUE,
-                ordered_query = TRUE,
+                ordered_query = FALSE, # <-
                 significant = TRUE,
                 user_threshold = 0.005,
-                correction_method = "fdr")
+                correction_method = "gSCS")
 
 gostres$result %>% select(term_name, term_id, source, everything())
 ```
@@ -945,6 +944,14 @@ t |>
   filter(round(open_target_scores_genetics, 4) != round(otGeneticsPortal, 4)) |> 
   select(symbol, open_target_scores_genetics, otGeneticsPortal)
 ```
+
+## Methods
+
+**Phase 2. Pathway analysis of GVC, Agora and OpenTargets candidate AD genes.** We conducted gene set over-representation analysis (ORA) of GVC, Agora and OpenTargets candidate AD gene lists using R\[37\] with the `gprofiler2` package (see [https://github.com/marcoralab/gvc_agora_opentargets](https://github.com/marcoralab/gvc_agora_opentargets.ora)), excluding electronic Gene Ontology (GO) annotations, and filtering results using a p-value significance threshold of 0.005 after multiple testing correction with the g:SCS algorithm.
+
+We used the GVC gene list of 1,344 genes in the proximity of AD risk loci that we built as described above. We retrieved Agora’s gene list of Alzheimer’s disease nominated targets (site version 3.4.0; data version syn13363290-v68) from <https://agora.adknowledgeportal.org/genes/nominated-targets> and the Agora’s gene scores (data version syn25741025-v12) from <https://www.synapse.org/Synapse:syn25741025> on October 24th 2024. We retrieved OpenTargets’ gene list of Alzheimer’s disease (EFO:MONDO_0004975) associated targets (data version v24_09) from <https://platform.opentargets.org/disease/MONDO_0004975/associations> on October 24th 2024.
+
+We conducted ORA using the following candidate AD gene lists: 1) Agora’s gene list of Alzheimer’s disease nominated targets decreasingly ordered by Agora’s genetics, multi-omics, or target risk score; 2) OpenTargets’ gene list of Alzheimer’s disease associated targets decreasingly ordered by OpenTargets’ genetics portal or global score; 3) GVC gene list decreasingly ordered by the aforementioned Agora’s or OpenTargets’ scores; 4) lists corresponding to regions of the Venn diagram built using R\[37\] with the `VennDiagram` package (see <https://github.com/marcoralab/gvc_agora_opentargets>) and three sets corresponding to gene lists 1-3, decreasingly ordered by the aforementioned Agora’s or OpenTargets’ scores.
 
 ## Print environment
 
