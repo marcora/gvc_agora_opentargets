@@ -47,7 +47,7 @@ gvc
 ```{r}
 gvc.genes <-
   gvc %>%
-  arrange(desc(absolute_distance)) %>%
+  arrange(absolute_distance) %>%
   distinct(gene_id, .keep_all = TRUE) %>%
   select(gene_id, gene_symbol, absolute_distance) %>%
   arrange(gene_symbol)
@@ -78,7 +78,7 @@ gvc.minus_apoe_hla
 ```{r}
 gvc.genes.minus_apoe_hla <-
   gvc.minus_apoe_hla %>%
-  arrange(desc(absolute_distance)) %>%
+  arrange(absolute_distance) %>%
   distinct(gene_id, .keep_all = TRUE) %>%
   select(gene_id, gene_symbol, absolute_distance) %>%
   bind_rows(gvc.genes.apoe_hla) %>%
@@ -108,6 +108,8 @@ ago2
 
 ```{r}
 ago <- ago1 %>% filter(hgnc_symbol %in% ago2$`Gene Symbol`)
+
+ago
 ```
 
 ### OpenTargets genes
@@ -636,6 +638,8 @@ gostplot(gostres, capped = FALSE, interactive = TRUE)
 
 ### GVC genes (within 1Mb flanking regions of GVC loci)
 
+N.B. unordered query
+
 ```{r}
 d0 <- gvc.genes %>% select(gene_id, gene_symbol)
 
@@ -664,6 +668,8 @@ gostplot(gostres, capped = FALSE, interactive = TRUE)
 
 ### GVC genes (within 1Mb flanking regions of GVC loci) minus APOE and HLA loci genes
 
+N.B. unordered query
+
 ```{r}
 d0.minus_apoe_hla <- gvc.genes.minus_apoe_hla %>% select(gene_id, gene_symbol)
 
@@ -690,7 +696,39 @@ gostres$result %>% select(term_name, term_id, source, everything())
 gostplot(gostres, capped = FALSE, interactive = TRUE)
 ```
 
+### GVC genes (within 1Mb flanking regions of GVC loci) minus APOE and HLA loci genes
+
+N.B. query ordered by absolute distance
+
+```{r}
+d0.minus_apoe_hla <- gvc.genes.minus_apoe_hla %>% arrange(absolute_distance) %>% select(gene_id, gene_symbol)
+
+d0.minus_apoe_hla
+```
+
+```{r}
+query <- d0.minus_apoe_hla %>% distinct(gene_id) %>% pull(gene_id)
+
+gostres <- gost(
+  query = query,
+  organism = "hsapiens",
+  domain_scope = "annotated",
+  exclude_iea = TRUE,
+  ordered_query = TRUE, # <- ORDERED QUERY!
+  significant = TRUE,
+  user_threshold = 0.005,
+  correction_method = "gSCS")
+
+gostres$result %>% select(term_name, term_id, source, everything())
+```
+
+```{r}
+gostplot(gostres, capped = FALSE, interactive = TRUE)
+```
+
 ### GVC genes (within 200Kb flanking regions of GVC loci) minus APOE and HLA loci genes
+
+N.B. unordered query
 
 ```{r}
 d0.minus_apoe_hla.200kb <- gvc.genes.minus_apoe_hla %>% filter(absolute_distance <= 200000) %>% select(gene_id, gene_symbol)
@@ -719,6 +757,8 @@ gostplot(gostres, capped = FALSE, interactive = TRUE)
 ```
 
 ### GVC genes (within 20Kb flanking regions of GVC loci) minus APOE and HLA loci genes
+
+N.B. unordered query
 
 ```{r}
 d0.minus_apoe_hla.20kb <- gvc.genes.minus_apoe_hla %>% filter(absolute_distance <= 20000) %>% select(gene_id, gene_symbol)
