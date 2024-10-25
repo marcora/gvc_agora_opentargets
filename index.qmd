@@ -32,9 +32,7 @@ set.seed(666)
 
 ## Read and prep data
 
-### GVC
-
-Genes within 1Mb window of (each side of?) GVC loci from Fanny:
+### GVC genes (within 1Mb flanking regions of GVC loci)
 
 ```{r}
 gvc <- read_xlsx("GVC_1Mb_comparison_050224.xlsx") %>%
@@ -55,6 +53,8 @@ gvc.genes
 gvc.genes %>% distinct(gene_symbol) %>% nrow()
 ```
 
+### GVC genes (within 1Mb flanking regions of GVC loci) minus APOE and HLA loci genes
+
 Remove genes in APOE and HLA loci and manually add APOE and HLA genes (based on Bellenguez2022):
 
 ```{r}
@@ -72,16 +72,12 @@ gvc.genes.minus_apoe_hla <- gvc.minus_apoe_hla %>% distinct(gene_id, .keep_all =
 gvc.genes.minus_apoe_hla
 ```
 
-```{r}
-gvc.genes.minus_apoe_hla %>% distinct(gene_symbol) %>% nrow()
-```
-
-Remove genes farther than 200Kb from GVC loci:
+### GVC genes (within 200Kb flanking regions of GVC loci) minus APOE and HLA loci genes
 
 ```{r}
 gvc.minus_apoe_hla.200kb <- gvc %>%
   filter(
-    absolute_distance >= 200000,
+    absolute_distance <= 200000,
     grouped_loci_gvc != "APOE / TOMM40" & grouped_loci_gvc != "HLA") %>%
   bind_rows(tibble(
     gene_id = c("ENSG00000130203", "ENSG00000196735", "ENSG00000179344", "ENSG00000196126"),
@@ -94,11 +90,26 @@ gvc.genes.minus_apoe_hla.200kb <- gvc.minus_apoe_hla.200kb %>% distinct(gene_id,
 gvc.genes.minus_apoe_hla.200kb
 ```
 
+
+### GVC genes (within 20Kb flanking regions of GVC loci) minus APOE and HLA loci genes
+
 ```{r}
-gvc.genes.minus_apoe_hla.200kb %>% distinct(gene_symbol) %>% nrow()
+gvc.minus_apoe_hla.20kb <- gvc %>%
+  filter(
+    absolute_distance <= 20000,
+    grouped_loci_gvc != "APOE / TOMM40" & grouped_loci_gvc != "HLA") %>%
+  bind_rows(tibble(
+    gene_id = c("ENSG00000130203", "ENSG00000196735", "ENSG00000179344", "ENSG00000196126"),
+    gene_symbol = c("APOE", "HLA-DQA1", "HLA-DQB1", "HLA-DRB1")))
 ```
 
-### Agora
+```{r}
+gvc.genes.minus_apoe_hla.20kb <- gvc.minus_apoe_hla.20kb %>% distinct(gene_id, .keep_all = TRUE) %>% select(gene_id, gene_symbol) %>% arrange(gene_symbol)
+
+gvc.genes.minus_apoe_hla.20kb
+```
+
+### Agora genes
 
 Alzheimer's disease gene prioritization scores from [Agora](https://www.synapse.org/Synapse:syn25741025) (see also related [journal article](https://alz-journals.onlinelibrary.wiley.com/doi/10.1002/trc2.12461)):
 
@@ -121,7 +132,7 @@ ago2
 ago <- ago1 %>% filter(hgnc_symbol %in% ago2$`Gene Symbol`)
 ```
 
-### OpenTargets
+### OpenTargets genes
 
 Alzheimer's disease gene prioritization scores from [OpenTargets](https://platform.opentargets.org/disease/MONDO_0004975/associations):
 
@@ -628,7 +639,7 @@ gostplot(gostres, capped = FALSE, interactive = TRUE)
 
 ## ORA of GVC genes
 
-### GVC genes unsorted/unfiltered
+### GVC genes (within 1Mb flanking regions of GVC loci)
 
 ```{r}
 d0 <- gvc.genes %>% select(gene_id, gene_symbol)
@@ -655,7 +666,7 @@ gostres$result %>% select(term_name, term_id, source, everything())
 gostplot(gostres, capped = FALSE, interactive = TRUE)
 ```
 
-### GVC genes unsorted/unfiltered minus genes in APOE and HLA loci
+### GVC genes (within 1Mb flanking regions of GVC loci) minus APOE and HLA loci genes
 
 ```{r}
 d0.minus_apoe_hla <- gvc.genes.minus_apoe_hla %>% select(gene_id, gene_symbol)
@@ -682,7 +693,7 @@ gostres$result %>% select(term_name, term_id, source, everything())
 gostplot(gostres, capped = FALSE, interactive = TRUE)
 ```
 
-### GVC genes unsorted/unfiltered minus genes in APOE and HLA loci
+### GVC genes (within 200Kb flanking regions of GVC loci) minus APOE and HLA loci genes
 
 ```{r}
 d0.minus_apoe_hla.200kb <- gvc.genes.minus_apoe_hla.200kb %>% select(gene_id, gene_symbol)
@@ -709,7 +720,34 @@ gostres$result %>% select(term_name, term_id, source, everything())
 gostplot(gostres, capped = FALSE, interactive = TRUE)
 ```
 
-### GVC genes sorted by Agora's `genetics_score`
+### GVC genes (within 20Kb flanking regions of GVC loci) minus APOE and HLA loci genes
+
+```{r}
+d0.minus_apoe_hla.20kb <- gvc.genes.minus_apoe_hla.20kb %>% select(gene_id, gene_symbol)
+
+d0.minus_apoe_hla.20kb
+```
+
+```{r}
+query <- d0.minus_apoe_hla.20kb %>% distinct(gene_id) %>% pull(gene_id)
+
+gostres <- gost(query = query,
+                organism = "hsapiens",
+                domain_scope = "annotated",
+                exclude_iea = TRUE,
+                ordered_query = FALSE, # <- UNORDERED QUERY!
+                significant = TRUE,
+                user_threshold = 0.005,
+                correction_method = "gSCS")
+
+gostres$result %>% select(term_name, term_id, source, everything())
+```
+
+```{r}
+gostplot(gostres, capped = FALSE, interactive = TRUE)
+```
+
+### GVC genes filtered and sorted by Agora's `genetics_score`
 
 Arrange by Agora's `genetics_score` and OpenTargets' `otGeneticsPortal`:
 
@@ -744,7 +782,7 @@ gostres$result %>% select(term_name, term_id, source, everything())
 gostplot(gostres, capped = FALSE, interactive = TRUE)
 ```
 
-### GVC genes sorted by OpenTargets' `otGeneticsPortal`
+### GVC genes filtered and sorted by OpenTargets' `otGeneticsPortal`
 
 Arrange by OpenTargets' `otGeneticsPortal` and Agora's `genetics_score`:
 
@@ -779,7 +817,7 @@ gostres$result %>% select(term_name, term_id, source, everything())
 gostplot(gostres, capped = FALSE, interactive = TRUE)
 ```
 
-### GVC genes sorted by Agora's `target_risk_score`
+### GVC genes filtered and sorted by Agora's `target_risk_score`
 
 Arrange by Agora's `target_risk_score` and OpenTargets' `globalScore`:
 
@@ -814,7 +852,7 @@ gostres$result %>% select(term_name, term_id, source, everything())
 gostplot(gostres, capped = FALSE, interactive = TRUE)
 ```
 
-### GVC genes sorted by OpenTargets' `globalScore`
+### GVC genes filtered and sorted by OpenTargets' `globalScore`
 
 Arrange by OpenTargets' `globalScore` and Agora's `target_risk_score`:
 
@@ -881,13 +919,14 @@ gostres$result %>% select(term_name, term_id, source, everything())
 gostplot(gostres, capped = FALSE, interactive = TRUE)
 ```
 
-### Agora genes sorted by `target_risk_score`
+
+### Agora genes sorted by `multi_omics_score`
 
 ```{r}
 d6 <- ago %>%
-  drop_na(target_risk_score) %>%
+  drop_na(multi_omics_score) %>%
   sample_frac(1L) %>% # randomize row order before arranging
-  arrange(desc(target_risk_score))
+  arrange(desc(multi_omics_score))
 
 d6
 ```
@@ -911,13 +950,13 @@ gostres$result %>% select(term_name, term_id, source, everything())
 gostplot(gostres, capped = FALSE, interactive = TRUE)
 ```
 
-### Agora genes sorted by `multi_omics_score`
+### Agora genes sorted by `target_risk_score`
 
 ```{r}
 d7 <- ago %>%
-  drop_na(multi_omics_score) %>%
+  drop_na(target_risk_score) %>%
   sample_frac(1L) %>% # randomize row order before arranging
-  arrange(desc(multi_omics_score))
+  arrange(desc(target_risk_score))
 
 d7
 ```
