@@ -76,7 +76,27 @@ gvc.genes.minus_apoe_hla
 gvc.genes.minus_apoe_hla %>% distinct(gene_symbol) %>% nrow()
 ```
 
+Remove genes farther than 200Kb from GVC loci:
 
+```{r}
+gvc.minus_apoe_hla.200kb <- gvc %>%
+  filter(
+    absolute_distance >= 200000,
+    grouped_loci_gvc != "APOE / TOMM40" & grouped_loci_gvc != "HLA") %>%
+  bind_rows(tibble(
+    gene_id = c("ENSG00000130203", "ENSG00000196735", "ENSG00000179344", "ENSG00000196126"),
+    gene_symbol = c("APOE", "HLA-DQA1", "HLA-DQB1", "HLA-DRB1")))
+```
+
+```{r}
+gvc.genes.minus_apoe_hla.200kb <- gvc.minus_apoe_hla.200kb %>% distinct(gene_id, .keep_all = TRUE) %>% select(gene_id, gene_symbol) %>% arrange(gene_symbol)
+
+gvc.genes.minus_apoe_hla.200kb
+```
+
+```{r}
+gvc.genes.minus_apoe_hla.200kb %>% distinct(gene_symbol) %>% nrow()
+```
 
 ### Agora
 
@@ -645,6 +665,33 @@ d0.minus_apoe_hla
 
 ```{r}
 query <- d0.minus_apoe_hla %>% distinct(gene_id) %>% pull(gene_id)
+
+gostres <- gost(query = query,
+                organism = "hsapiens",
+                domain_scope = "annotated",
+                exclude_iea = TRUE,
+                ordered_query = FALSE, # <- UNORDERED QUERY!
+                significant = TRUE,
+                user_threshold = 0.005,
+                correction_method = "gSCS")
+
+gostres$result %>% select(term_name, term_id, source, everything())
+```
+
+```{r}
+gostplot(gostres, capped = FALSE, interactive = TRUE)
+```
+
+### GVC genes unsorted/unfiltered minus genes in APOE and HLA loci
+
+```{r}
+d0.minus_apoe_hla.200kb <- gvc.genes.minus_apoe_hla.200kb %>% select(gene_id, gene_symbol)
+
+d0.minus_apoe_hla.200kb
+```
+
+```{r}
+query <- d0.minus_apoe_hla.200kb %>% distinct(gene_id) %>% pull(gene_id)
 
 gostres <- gost(query = query,
                 organism = "hsapiens",
