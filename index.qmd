@@ -10,8 +10,8 @@ execute:
 
 ## TODO
 
-- [ ] Redo ORA of GVC genes excluding MHC and APOE locus genes
-- [ ] Summarize ORA results using `enrichplot`, `clusterProfiler`, or similar tools
+-   [ ] Redo ORA of GVC genes excluding MHC and APOE locus genes
+-   [ ] Summarize ORA results using `enrichplot`, `clusterProfiler`, or similar tools
 
 ## Setup environment
 
@@ -638,7 +638,9 @@ gostplot(gostres, capped = FALSE, interactive = TRUE)
 
 ### GVC genes (within 1Mb flanking regions of GVC loci)
 
-N.B. unordered query
+::: callout-important
+unordered query
+:::
 
 ```{r}
 d0 <- gvc.genes %>% select(gene_id, gene_symbol)
@@ -668,7 +670,9 @@ gostplot(gostres, capped = FALSE, interactive = TRUE)
 
 ### GVC genes (within 1Mb flanking regions of GVC loci) minus APOE and HLA loci genes
 
-N.B. unordered query
+::: callout-important
+unordered query
+:::
 
 ```{r}
 d0.minus_apoe_hla <- gvc.genes.minus_apoe_hla %>% select(gene_id, gene_symbol)
@@ -698,7 +702,9 @@ gostplot(gostres, capped = FALSE, interactive = TRUE)
 
 ### GVC genes (within 1Mb flanking regions of GVC loci) minus APOE and HLA loci genes
 
-N.B. query ordered by absolute distance
+::: callout-important
+query ordered by absolute distance
+:::
 
 ```{r}
 d0.minus_apoe_hla <- gvc.genes.minus_apoe_hla %>% arrange(absolute_distance) %>% select(gene_id, gene_symbol)
@@ -728,7 +734,9 @@ gostplot(gostres, capped = FALSE, interactive = TRUE)
 
 ### GVC genes (within 200Kb flanking regions of GVC loci) minus APOE and HLA loci genes
 
-N.B. unordered query
+::: callout-important
+unordered query
+:::
 
 ```{r}
 d0.minus_apoe_hla.200kb <- gvc.genes.minus_apoe_hla %>% filter(absolute_distance <= 200000) %>% select(gene_id, gene_symbol)
@@ -758,7 +766,9 @@ gostplot(gostres, capped = FALSE, interactive = TRUE)
 
 ### GVC genes (within 20Kb flanking regions of GVC loci) minus APOE and HLA loci genes
 
-N.B. unordered query
+::: callout-important
+unordered query
+:::
 
 ```{r}
 d0.minus_apoe_hla.20kb <- gvc.genes.minus_apoe_hla %>% filter(absolute_distance <= 20000) %>% select(gene_id, gene_symbol)
@@ -788,14 +798,16 @@ gostplot(gostres, capped = FALSE, interactive = TRUE)
 
 ### GVC genes (within 1Mb flanking regions of GVC loci) minus APOE and HLA loci genes sorted by Agora's `genetics_score`
 
-N.B. `ago1` is used instead of `ago` to annotate a larger proportion of GVC genes with Agora scores
+::: callout-note
+`ago1` is used instead of `ago` to annotate a larger proportion of GVC genes with Agora scores
+:::
 
 ```{r}
 d1 <- gvc.genes.minus_apoe_hla %>%
   left_join(ago1, by = join_by(gene_id == ensembl_gene_id)) %>% 
   left_join(otensg, by = join_by(gene_id == ensembl_gene_id)) %>% 
   sample_frac(1L) %>% # randomize row order before arranging
-  arrange(desc(genetics_score)) %>% #, desc(otGeneticsPortal), desc(target_risk_score), desc(globalScore)) %>% 
+  arrange(desc(genetics_score)) %>%
   select(-c(symbol, hgnc_symbol)) %>% 
   select(gene_id, gene_symbol, genetics_score, otGeneticsPortal, everything())
 
@@ -824,14 +836,16 @@ gostplot(gostres, capped = FALSE, interactive = TRUE)
 
 ### GVC genes (within 1Mb flanking regions of GVC loci) minus APOE and HLA loci genes sorted by OpenTargets' `otGeneticsPortal`
 
-N.B. `ago1` is used instead of `ago` to annotate a larger proportion of GVC genes with Agora scores
+::: callout-note
+`ago1` is used instead of `ago` to annotate a larger proportion of GVC genes with Agora scores
+:::
 
 ```{r}
 d2 <- gvc.genes.minus_apoe_hla %>%
   left_join(ago1, by = join_by(gene_id == ensembl_gene_id)) %>% 
   left_join(otensg, by = join_by(gene_id == ensembl_gene_id)) %>% 
   sample_frac(1L) %>% # randomize row order before arranging
-  arrange(desc(otGeneticsPortal)) %>% #, desc(genetics_score), desc(globalScore), desc(target_risk_score)) %>%
+  arrange(desc(otGeneticsPortal)) %>%
   select(-c(symbol, hgnc_symbol)) %>% 
   select(gene_id, gene_symbol, otGeneticsPortal, genetics_score, everything())
 
@@ -860,14 +874,16 @@ gostplot(gostres, capped = FALSE, interactive = TRUE)
 
 ### GVC genes (within 1Mb flanking regions of GVC loci) minus APOE and HLA loci genes sorted by Agora's `target_risk_score`
 
-N.B. `ago1` is used instead of `ago` to annotate a larger proportion of GVC genes with Agora scores
+::: callout-note
+`ago1` is used instead of `ago` to annotate a larger proportion of GVC genes with Agora scores
+:::
 
 ```{r}
 d3 <- gvc.genes.minus_apoe_hla %>%
   left_join(ago1, by = join_by(gene_id == ensembl_gene_id)) %>% 
   left_join(otensg, by = join_by(gene_id == ensembl_gene_id)) %>% 
   sample_frac(1L) %>% # randomize row order before arranging
-  arrange(desc(target_risk_score)) %>% #, desc(globalScore)) %>% 
+  arrange(desc(target_risk_score)) %>%
   select(-c(symbol, hgnc_symbol)) %>% 
   select(gene_id, gene_symbol, target_risk_score, globalScore, everything())
 
@@ -896,14 +912,16 @@ gostplot(gostres, capped = FALSE, interactive = TRUE)
 
 ### GVC genes (within 1Mb flanking regions of GVC loci) minus APOE and HLA loci genes sorted by OpenTargets' `globalScore`
 
-N.B. `ago1` is used instead of `ago` to annotate a larger proportion of GVC genes with Agora scores
+::: callout-note
+`ago1` is used instead of `ago` to annotate a larger proportion of GVC genes with Agora scores
+:::
 
 ```{r}
 d4 <- gvc.genes.minus_apoe_hla %>%
   left_join(ago1, by = join_by(gene_id == ensembl_gene_id)) %>% 
   left_join(otensg, by = join_by(gene_id == ensembl_gene_id)) %>% 
   sample_frac(1L) %>% # randomize row order before arranging
-  arrange(desc(globalScore)) %>% #, desc(target_risk_score)) %>% 
+  arrange(desc(globalScore)) %>%
   select(-c(symbol, hgnc_symbol)) %>% 
   select(gene_id, gene_symbol, globalScore, target_risk_score, everything())
 
@@ -962,7 +980,6 @@ gostres$result %>% select(term_name, term_id, source, everything())
 ```{r}
 gostplot(gostres, capped = FALSE, interactive = TRUE)
 ```
-
 
 ### Agora genes sorted by `multi_omics_score`
 
