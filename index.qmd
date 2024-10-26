@@ -732,6 +732,18 @@ gostres$result %>% select(term_name, term_id, source, everything())
 gostplot(gostres, capped = FALSE, interactive = TRUE)
 ```
 
+Perform alternative ORA of GO:CP using [GOrilla](https://cbl-gorilla.cs.technion.ac.il/) \<2024-10-24\>:
+
+```{r}
+d0.minus_apoe_hla %>% distinct(gene_id) %>% pull(gene_id) %>% write("query.txt")
+```
+
+![](gvc.genes.minus_apoe_hla.gorilla.png)
+
+```{r}
+read_tsv("gvc.genes.minus_apoe_hla.gorilla.tsv") %>% select(Description, everything())
+```
+
 ### GVC genes (within 200Kb flanking regions of GVC loci) minus APOE and HLA loci genes
 
 ::: callout-important
