@@ -250,6 +250,7 @@ genes
 ```
 
 ```{r}
+#| cache: true
 query <- genes %>% distinct(gene_id) %>% pull(gene_id)
 
 gostres <- gost(
@@ -291,6 +292,7 @@ genes
 ```
 
 ```{r}
+#| cache: true
 query <- genes %>% distinct(gene_id) %>% pull(gene_id)
 
 gostres <- gost(
@@ -327,6 +329,7 @@ genes
 ```
 
 ```{r}
+#| cache: true
 query <- genes %>% distinct(gene_id) %>% pull(gene_id)
 
 gostres <- gost(
@@ -363,6 +366,7 @@ genes
 ```
 
 ```{r}
+#| cache: true
 query <- genes %>% distinct(gene_id) %>% pull(gene_id)
 
 gostres <- gost(
@@ -399,6 +403,7 @@ genes
 ```
 
 ```{r}
+#| cache: true
 query <- genes %>% distinct(gene_id) %>% pull(gene_id)
 
 gostres <- gost(
@@ -435,6 +440,7 @@ genes
 ```
 
 ```{r}
+#| cache: true
 query <- genes %>% distinct(gene_id) %>% pull(gene_id)
 
 gostres <- gost(
@@ -471,6 +477,7 @@ genes
 ```
 
 ```{r}
+#| cache: true
 query <- genes %>% distinct(gene_id) %>% pull(gene_id)
 
 gostres <- gost(
@@ -507,6 +514,7 @@ genes
 ```
 
 ```{r}
+#| cache: true
 query <- genes %>% distinct(gene_id) %>% pull(gene_id)
 
 gostres <- gost(
@@ -543,6 +551,7 @@ genes
 ```
 
 ```{r}
+#| cache: true
 query <- genes %>% distinct(gene_id) %>% pull(gene_id)
 
 gostres <- gost(
@@ -579,6 +588,7 @@ genes
 ```
 
 ```{r}
+#| cache: true
 query <- genes %>% distinct(gene_id) %>% pull(gene_id)
 
 gostres <- gost(
@@ -615,6 +625,7 @@ genes
 ```
 
 ```{r}
+#| cache: true
 query <- genes %>% distinct(gene_id) %>% pull(gene_id)
 
 gostres <- gost(
@@ -649,6 +660,7 @@ d0
 ```
 
 ```{r}
+#| cache: true
 query <- d0 %>% distinct(gene_id) %>% pull(gene_id)
 
 gostres <- gost(
@@ -681,6 +693,7 @@ d0.minus_apoe_hla
 ```
 
 ```{r}
+#| cache: true
 query <- d0.minus_apoe_hla %>% distinct(gene_id) %>% pull(gene_id)
 
 gostres <- gost(
@@ -714,6 +727,7 @@ d0.minus_apoe_hla.200kb
 ```
 
 ```{r}
+#| cache: true
 query <- d0.minus_apoe_hla.200kb %>% distinct(gene_id) %>% pull(gene_id)
 
 gostres <- gost(
@@ -746,6 +760,7 @@ d0.minus_apoe_hla.20kb
 ```
 
 ```{r}
+#| cache: true
 query <- d0.minus_apoe_hla.20kb %>% distinct(gene_id) %>% pull(gene_id)
 
 gostres <- gost(
@@ -778,6 +793,7 @@ d0.minus_apoe_hla
 ```
 
 ```{r}
+#| cache: true
 query <- d0.minus_apoe_hla %>% distinct(gene_id) %>% pull(gene_id)
 
 gostres <- gost(
@@ -828,6 +844,7 @@ d1
 ```
 
 ```{r}
+#| cache: true
 query <- d1 %>% distinct(gene_id) %>% pull(gene_id)
 
 gostres <- gost(
@@ -866,6 +883,7 @@ d2
 ```
 
 ```{r}
+#| cache: true
 query <- d2 %>% distinct(gene_id) %>% pull(gene_id)
 
 gostres <- gost(
@@ -904,6 +922,7 @@ d3
 ```
 
 ```{r}
+#| cache: true
 query <- d3 %>% distinct(gene_id) %>% pull(gene_id)
 
 gostres <- gost(
@@ -942,6 +961,7 @@ d4
 ```
 
 ```{r}
+#| cache: true
 query <- d4 %>% distinct(gene_id) %>% pull(gene_id)
 
 gostres <- gost(
@@ -975,6 +995,7 @@ d5
 ```
 
 ```{r}
+#| cache: true
 query <- d5 %>% distinct(ensembl_gene_id) %>% pull(ensembl_gene_id)
 
 gostres <- gost(
@@ -1006,6 +1027,7 @@ d6
 ```
 
 ```{r}
+#| cache: true
 query <- d6 %>% distinct(ensembl_gene_id) %>% pull(ensembl_gene_id)
 
 gostres <- gost(
@@ -1037,6 +1059,7 @@ d7
 ```
 
 ```{r}
+#| cache: true
 query <- d7 %>% distinct(ensembl_gene_id) %>% pull(ensembl_gene_id)
 
 gostres <- gost(
@@ -1070,6 +1093,7 @@ d8
 ```
 
 ```{r}
+#| cache: true
 query <- d8 %>% distinct(ensembl_gene_id) %>% pull(ensembl_gene_id)
 
 gostres <- gost(
@@ -1101,6 +1125,7 @@ d9
 ```
 
 ```{r}
+#| cache: true
 query <- d9 %>% distinct(ensembl_gene_id) %>% pull(ensembl_gene_id)
 
 gostres <- gost(
@@ -1127,6 +1152,7 @@ d10 <- read_xlsx("2024-08-29_GVC Table 1C - WORKING COPY.xlsx", sheet = "PG Gene
 ```
 
 ```{r}
+#| cache: true
 query <-
   d10 %>%
   rename(gene = `GVC expanded list of possible genes (500kb)`) %>%
@@ -1229,7 +1255,17 @@ d <- gvc.genes.minus_apoe_hla %>%
   mutate(combined_rank = rowSums(select(., gvc_rank, agora_rank, opentargets_rank) * weights)) %>%
   mutate(combined_rank = rank(combined_rank, ties.method = "min")) %>%
   arrange(combined_rank) %>%
-  select(gene_id, gene_symbol, combined_rank, gvc_rank, agora_rank, opentargets_rank, absolute_distance, target_risk_score, globalScore, everything())
+  select(gene_id,
+         gene_symbol,
+         combined_rank,
+         gvc_rank, agora_rank,
+         opentargets_rank,
+         absolute_distance,
+         target_risk_score,
+         genetics_score,
+         multi_omics_score,
+         globalScore,
+         otGeneticsPortal)
 
 d %>% writexl::write_xlsx("gvc_genes_sorted_by_combined_rank.xlsx")
 
