@@ -1202,6 +1202,43 @@ gvc %>%
   gt::gt()
 ```
 
+## Table of GVC genes sorted by combined rank (GVC absolute distance, Agora and OpenTargets scores)
+
+GVC genes (within 1Mb flanking regions of GVC loci) minus APOE and HLA loci genes sorted by GVC's `absolute_distance`, Agora's `target_risk_score` and OpenTargets' `globalScore`.
+
+Genes are sorted based on a weighted average rank with the following weights:
+
+-   0.50 for GVC's `absolute_distance`
+-   0.25 for Agora's `target_risk_score`
+-   0.25 for OpenTargets' `globalScore`
+
+::: callout-note
+`ago1` is used instead of `ago` to annotate a larger proportion of GVC genes with Agora scores
+:::
+
+```{r}
+weights <- c(0.5, 0.25, 0.25)  # weights for gvc, agora, open_targets ranks
+
+d <- gvc.genes.minus_apoe_hla %>%
+  left_join(ago1, by = join_by(gene_id == ensembl_gene_id)) %>% 
+  left_join(otensg, by = join_by(gene_id == ensembl_gene_id)) %>% 
+  sample_frac(1L) %>% # randomize row order before ranking
+  mutate(gvc_rank = rank(absolute_distance, ties.method = "min"),
+         agora_rank = rank(-target_risk_score, ties.method = "min"),
+         opentargets_rank = rank(-globalScore, ties.method = "min")) %>%
+  mutate(combined_rank = rowSums(select(., gvc_rank, agora_rank, opentargets_rank) * weights)) %>%
+  mutate(combined_rank = rank(combined_rank, ties.method = "min")) %>%
+  arrange(combined_rank) %>%
+  select(gene_id, gene_symbol, combined_rank, gvc_rank, agora_rank, opentargets_rank, absolute_distance, target_risk_score, globalScore, everything())
+
+d %>% writexl::write_xlsx("gvc_genes_sorted_by_combined_rank.xlsx")
+
+d
+```
+
+
+
+
 ## Methods for manuscript
 
 **Phase 2. Pathway analysis of GVC, Agora and OpenTargets candidate AD genes.** We conducted gene set over-representation analysis (ORA) of GVC, Agora and OpenTargets candidate AD gene lists using R\[37\] with the `gprofiler2` package (see [https://github.com/marcoralab/gvc_agora_opentargets](https://github.com/marcoralab/gvc_agora_opentargets.ora)), excluding electronic Gene Ontology (GO) annotations, and filtering results using a p-value significance threshold of 0.005 after multiple testing correction with the g:SCS algorithm.
