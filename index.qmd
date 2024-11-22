@@ -1243,7 +1243,7 @@ Genes are sorted based on a weighted average rank with the following weights:
 :::
 
 ```{r}
-weights <- c(0.5, 0.25, 0.25)  # weights for gvc, agora, open_targets ranks
+weights <- c(0.50, 0.25, 0.25)  # weights for gvc, agora, open_targets ranks
 
 d <- gvc.genes.minus_apoe_hla %>%
   left_join(ago1, by = join_by(gene_id == ensembl_gene_id)) %>% 
@@ -1267,11 +1267,15 @@ d <- gvc.genes.minus_apoe_hla %>%
          globalScore,
          otGeneticsPortal)
 
-d %>% writexl::write_xlsx("gvc_genes_sorted_by_combined_rank.xlsx")
-
 d
 ```
 
+```{r}
+#| echo: false
+d %>% writexl::write_xlsx("gvc_genes_sorted_by_combined_rank.xlsx")
+```
+
+Download the table above as an Excel spreadsheet [here](gvc_genes_sorted_by_combined_rank.xlsx).
 
 
 
