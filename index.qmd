@@ -8,11 +8,6 @@ execute:
   warning: false
 ---
 
-## TODO
-
--   [x] Redo ORA of GVC genes excluding MHC and APOE locus genes
--   [ ] Summarize ORA results using `enrichplot`, `clusterProfiler`, or similar tools
-
 ## Setup environment
 
 ```{r}
@@ -32,7 +27,7 @@ set.seed(666)
 
 ## Read and prep data
 
-### GVC genes (within 1Mb flanking regions of GVC loci)
+### GVC genes (within 1Mb flanking regions of GVC loci) \[OLD\]
 
 ```{r}
 gvc <-
@@ -117,9 +112,9 @@ ago
 Alzheimer's disease gene prioritization scores from [OpenTargets](https://platform.opentargets.org/disease/MONDO_0004975/associations):
 
 ```{r}
-# ot <- read_tsv("OT-MONDO_0004975-associated-targets-6_4_2024-v24_03.tsv", show_col_types = FALSE, na = "No data")
+ot <- read_tsv("OT-MONDO_0004975-associated-targets-6_4_2024-v24_03.tsv", show_col_types = FALSE, na = "No data")
 
-ot <- read_tsv("OT-MONDO_0004975-associated-targets-10_24_2024-v24_09.tsv", show_col_types = FALSE, na = "No data")
+# ot <- read_tsv("OT-MONDO_0004975-associated-targets-10_24_2024-v24_09.tsv", show_col_types = FALSE, na = "No data")
 
 ot
 ```
@@ -713,7 +708,6 @@ gostres$result %>% select(term_name, term_id, source, everything())
 gostplot(gostres, capped = FALSE, interactive = TRUE)
 ```
 
-
 ### GVC genes (within 200Kb flanking regions of GVC loci) minus APOE and HLA loci genes
 
 ::: callout-important
@@ -1277,7 +1271,9 @@ d %>% writexl::write_xlsx("gvc_genes_sorted_by_combined_rank.xlsx")
 
 Download the table above as an Excel spreadsheet [here](gvc_genes_sorted_by_combined_rank.xlsx).
 
-
+```{r}
+read_tsv("gvc_1361.txt") %>% filter(GVC %notin% gvc.genes$gene_symbol) %>% arrange(GVC)
+```
 
 ## Methods for manuscript
 
