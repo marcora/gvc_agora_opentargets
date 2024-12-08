@@ -136,69 +136,6 @@ otensg <- gconvert(
 otensg
 ```
 
-## Correlation between Agora and OpenTargets scores
-
-### GVC genes
-
-```{r}
-d.cor <-
-  gvc.genes %>%
-  left_join(ago, by = join_by(gene_id == ensembl_gene_id)) %>% 
-  left_join(otensg, by = join_by(gene_id == ensembl_gene_id))
-```
-
-```{r}
-d.cor %>% nrow()
-
-d.cor %>% drop_na(genetics_score, otGeneticsPortal) %>% nrow()
-
-d.cor %>%
-  drop_na(genetics_score, otGeneticsPortal) %>%
-  summarize(cor = tidy(cor.test(genetics_score, otGeneticsPortal, method="kendall"))) %>%
-  unnest(cor)
-```
-
-```{r}
-d.cor %>% nrow()
-
-d.cor %>% drop_na(target_risk_score, globalScore) %>% nrow()
-
-d.cor %>%
-  drop_na(target_risk_score, globalScore) %>%
-  summarize(cor = tidy(cor.test(target_risk_score, globalScore, method="kendall"))) %>%
-  unnest(cor)
-```
-
-### All genes
-
-```{r}
-d.cor <-
-  ago %>% 
-  left_join(otensg, by = "ensembl_gene_id")
-```
-
-```{r}
-d.cor %>% nrow()
-
-d.cor %>% drop_na(genetics_score, otGeneticsPortal) %>% nrow()
-
-d.cor %>%
-  drop_na(genetics_score, otGeneticsPortal) %>%
-  summarize(cor = tidy(cor.test(genetics_score, otGeneticsPortal, method="kendall"))) %>%
-  unnest(cor)
-```
-
-```{r}
-d.cor %>% nrow()
-
-d.cor %>% drop_na(target_risk_score, globalScore) %>% nrow()
-
-d.cor %>%
-  drop_na(target_risk_score, globalScore) %>%
-  summarize(cor = tidy(cor.test(target_risk_score, globalScore, method="kendall"))) %>%
-  unnest(cor)
-```
-
 ## Overlaps between GVC, Agora, and OpenTargets genes
 
 ```{r}
@@ -666,9 +603,12 @@ gostres <- gost(
   ordered_query = FALSE, # <- UNORDERED QUERY!
   significant = TRUE,
   user_threshold = 0.005,
+  sources = c("GO:BP", "KEGG", "REAC"),
   correction_method = "gSCS")
 
-gostres$result %>% select(term_name, term_id, source, everything())
+gostres$result %>%
+  select(term_name, term_id, source, everything()) %>%
+  filter(term_size >= 5, term_size <= 350, intersection_size >= 3)
 ```
 
 ```{r}
@@ -699,9 +639,12 @@ gostres <- gost(
   ordered_query = FALSE, # <- UNORDERED QUERY!
   significant = TRUE,
   user_threshold = 0.005,
+  sources = c("GO:BP", "KEGG", "REAC"),
   correction_method = "gSCS")
 
-gostres$result %>% select(term_name, term_id, source, everything())
+gostres$result %>%
+  select(term_name, term_id, source, everything()) %>%
+  filter(term_size >= 5, term_size <= 350, intersection_size >= 3)
 ```
 
 ```{r}
@@ -732,9 +675,12 @@ gostres <- gost(
   ordered_query = FALSE, # <- UNORDERED QUERY!
   significant = TRUE,
   user_threshold = 0.005,
+  sources = c("GO:BP", "KEGG", "REAC"),
   correction_method = "gSCS")
 
-gostres$result %>% select(term_name, term_id, source, everything())
+gostres$result %>%
+  select(term_name, term_id, source, everything()) %>%
+  filter(term_size >= 5, term_size <= 350, intersection_size >= 3)
 ```
 
 ```{r}
@@ -765,9 +711,12 @@ gostres <- gost(
   ordered_query = FALSE, # <- UNORDERED QUERY!
   significant = TRUE,
   user_threshold = 0.005,
+  sources = c("GO:BP", "KEGG", "REAC"),
   correction_method = "gSCS")
 
-gostres$result %>% select(term_name, term_id, source, everything())
+gostres$result %>%
+  select(term_name, term_id, source, everything()) %>%
+  filter(term_size >= 5, term_size <= 350, intersection_size >= 3)
 ```
 
 ```{r}
@@ -790,6 +739,10 @@ d0.minus_apoe_hla
 #| cache: true
 query <- d0.minus_apoe_hla %>% distinct(gene_id) %>% pull(gene_id)
 
+writeLines(query, "enrichmentmap/gvc.genes.minus_apoe_hla.absolute_distance.query.txt")
+
+multiquery <- c("> gvc.genes.minus_apoe_hla.absolute_distance", query)
+
 gostres <- gost(
   query = query,
   organism = "hsapiens",
@@ -798,9 +751,12 @@ gostres <- gost(
   ordered_query = TRUE, # <- ORDERED QUERY!
   significant = TRUE,
   user_threshold = 0.005,
+  sources = c("GO:BP", "KEGG", "REAC"),
   correction_method = "gSCS")
 
-gostres$result %>% select(term_name, term_id, source, everything())
+gostres$result %>%
+  select(term_name, term_id, source, everything()) %>%
+  filter(term_size >= 5, term_size <= 350, intersection_size >= 3)
 ```
 
 ```{r}
@@ -808,10 +764,6 @@ gostplot(gostres, capped = FALSE, interactive = TRUE)
 ```
 
 Perform alternative ORA of GO:CP using [GOrilla](https://cbl-gorilla.cs.technion.ac.il/) \<2024-10-24\>:
-
-```{r}
-d0.minus_apoe_hla %>% distinct(gene_id) %>% pull(gene_id) %>% write("query.txt")
-```
 
 ![](gvc.genes.minus_apoe_hla.gorilla.png)
 
@@ -849,9 +801,12 @@ gostres <- gost(
   ordered_query = TRUE,
   significant = TRUE,
   user_threshold = 0.005,
+  sources = c("GO:BP", "KEGG", "REAC"),
   correction_method = "gSCS")
 
-gostres$result %>% select(term_name, term_id, source, everything())
+gostres$result %>%
+  select(term_name, term_id, source, everything()) %>%
+  filter(term_size >= 5, term_size <= 350, intersection_size >= 3)
 ```
 
 ```{r}
@@ -888,9 +843,12 @@ gostres <- gost(
   ordered_query = TRUE,
   significant = TRUE,
   user_threshold = 0.005,
+  sources = c("GO:BP", "KEGG", "REAC"),
   correction_method = "gSCS")
 
-gostres$result %>% select(term_name, term_id, source, everything())
+gostres$result %>%
+  select(term_name, term_id, source, everything()) %>%
+  filter(term_size >= 5, term_size <= 350, intersection_size >= 3)
 ```
 
 ```{r}
@@ -927,9 +885,12 @@ gostres <- gost(
   ordered_query = TRUE,
   significant = TRUE,
   user_threshold = 0.005,
+  sources = c("GO:BP", "KEGG", "REAC"),
   correction_method = "gSCS")
 
-gostres$result %>% select(term_name, term_id, source, everything())
+gostres$result %>%
+  select(term_name, term_id, source, everything()) %>%
+  filter(term_size >= 5, term_size <= 350, intersection_size >= 3)
 ```
 
 ```{r}
@@ -966,9 +927,12 @@ gostres <- gost(
   ordered_query = TRUE,
   significant = TRUE,
   user_threshold = 0.005,
+  sources = c("GO:BP", "KEGG", "REAC"),
   correction_method = "gSCS")
 
-gostres$result %>% select(term_name, term_id, source, everything())
+gostres$result %>%
+  select(term_name, term_id, source, everything()) %>%
+  filter(term_size >= 5, term_size <= 350, intersection_size >= 3)
 ```
 
 ```{r}
@@ -1000,9 +964,12 @@ gostres <- gost(
   ordered_query = TRUE,
   significant = TRUE,
   user_threshold = 0.005,
+  sources = c("GO:BP", "KEGG", "REAC"),
   correction_method = "gSCS")
 
-gostres$result %>% select(term_name, term_id, source, everything())
+gostres$result %>%
+  select(term_name, term_id, source, everything()) %>%
+  filter(term_size >= 5, term_size <= 350, intersection_size >= 3)
 ```
 
 ```{r}
@@ -1032,9 +999,12 @@ gostres <- gost(
   ordered_query = TRUE,
   significant = TRUE,
   user_threshold = 0.005,
+  sources = c("GO:BP", "KEGG", "REAC"),
   correction_method = "gSCS")
 
-gostres$result %>% select(term_name, term_id, source, everything())
+gostres$result %>%
+  select(term_name, term_id, source, everything()) %>%
+  filter(term_size >= 5, term_size <= 350, intersection_size >= 3)
 ```
 
 ```{r}
@@ -1056,6 +1026,10 @@ d7
 #| cache: true
 query <- d7 %>% distinct(ensembl_gene_id) %>% pull(ensembl_gene_id)
 
+writeLines(query, "enrichmentmap/agora.genes.target_risk_score.query.txt")
+
+multiquery <- c(multiquery, "> agora.genes.target_risk_score", query)
+
 gostres <- gost(
   query = query,
   organism = "hsapiens",
@@ -1064,9 +1038,12 @@ gostres <- gost(
   ordered_query = TRUE,
   significant = TRUE,
   user_threshold = 0.005,
+  sources = c("GO:BP", "KEGG", "REAC"),
   correction_method = "gSCS")
 
-gostres$result %>% select(term_name, term_id, source, everything())
+gostres$result %>%
+  select(term_name, term_id, source, everything()) %>%
+  filter(term_size >= 5, term_size <= 350, intersection_size >= 3)
 ```
 
 ```{r}
@@ -1098,9 +1075,12 @@ gostres <- gost(
   ordered_query = TRUE,
   significant = TRUE,
   user_threshold = 0.005,
+  sources = c("GO:BP", "KEGG", "REAC"),
   correction_method = "gSCS")
 
-gostres$result %>% select(term_name, term_id, source, everything())
+gostres$result %>%
+  select(term_name, term_id, source, everything()) %>%
+  filter(term_size >= 5, term_size <= 350, intersection_size >= 3)
 ```
 
 ```{r}
@@ -1122,6 +1102,10 @@ d9
 #| cache: true
 query <- d9 %>% distinct(ensembl_gene_id) %>% pull(ensembl_gene_id)
 
+writeLines(query, "enrichmentmap/opentargets.genes.global_score.query.txt")
+
+multiquery <- c(multiquery, "> opentargets.genes.global_score", query)
+
 gostres <- gost(
   query = query,
   organism = "hsapiens",
@@ -1130,13 +1114,23 @@ gostres <- gost(
   ordered_query = TRUE,
   significant = TRUE,
   user_threshold = 0.005,
+  sources = c("GO:BP", "KEGG", "REAC"),
   correction_method = "gSCS")
 
-gostres$result %>% select(term_name, term_id, source, everything())
+gostres$result %>%
+  select(term_name, term_id, source, everything()) %>%
+  filter(term_size >= 5, term_size <= 350, intersection_size >= 3)
 ```
 
 ```{r}
 gostplot(gostres, capped = FALSE, interactive = TRUE)
+```
+
+
+## Write multiquery to file for later use in `enrichmentmap`
+
+```{r}
+writeLines(multiquery, "enrichmentmap/multiquery.txt")
 ```
 
 ## ORA of GVC genes in table from manuscript
@@ -1162,9 +1156,12 @@ gostres <- gost(
   ordered_query = FALSE, # <- UNORDERED QUERY!
   significant = TRUE,
   user_threshold = 0.005,
+  sources = c("GO:BP", "KEGG", "REAC"),
   correction_method = "gSCS")
 
-gostres$result %>% select(term_name, term_id, source, everything())
+gostres$result %>%
+  select(term_name, term_id, source, everything()) %>%
+  filter(term_size >= 5, term_size <= 350, intersection_size >= 3)
 ```
 
 ```{r}
@@ -1273,6 +1270,56 @@ Download the table above as an Excel spreadsheet [here](gvc_genes_sorted_by_comb
 
 ```{r}
 read_tsv("gvc_1361.txt") %>% filter(GVC %notin% gvc.genes$gene_symbol) %>% arrange(GVC)
+```
+
+## Correlation between GVC, Agora and OpenTargets scores
+
+### GVC vs Agora
+
+```{r}
+d %>%
+  drop_na(absolute_distance, target_risk_score) %>%
+  summarize(cor = tidy(cor.test(-absolute_distance, target_risk_score, method="kendall"))) %>%
+  unnest(cor)
+```
+
+```{r}
+d %>%
+  drop_na(absolute_distance, genetics_score) %>%
+  summarize(cor = tidy(cor.test(-absolute_distance, genetics_score, method="kendall"))) %>%
+  unnest(cor)
+```
+
+```{r}
+d %>%
+  drop_na(absolute_distance, multi_omics_score) %>%
+  summarize(cor = tidy(cor.test(-absolute_distance, multi_omics_score, method="kendall"))) %>%
+  unnest(cor)
+```
+
+### GVC vs OpenTargets
+
+```{r}
+d %>%
+  drop_na(absolute_distance, globalScore) %>%
+  summarize(cor = tidy(cor.test(-absolute_distance, globalScore, method="kendall"))) %>%
+  unnest(cor)
+```
+
+```{r}
+d %>%
+  drop_na(absolute_distance, otGeneticsPortal) %>%
+  summarize(cor = tidy(cor.test(-absolute_distance, otGeneticsPortal, method="kendall"))) %>%
+  unnest(cor)
+```
+
+### Agora vs OpenTargets
+
+```{r}
+d %>%
+  drop_na(target_risk_score, globalScore) %>%
+  summarize(cor = tidy(cor.test(target_risk_score, globalScore, method="kendall"))) %>%
+  unnest(cor)
 ```
 
 ## Methods for manuscript
