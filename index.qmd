@@ -1350,6 +1350,14 @@ read_tsv("gvc_1361.txt") %>% filter(GVC %notin% gvc.genes$gene_symbol) %>% arran
 d %>% arrange(gvc_rank)
 ```
 
+
+```{r}
+#| echo: false
+d %>% arrange(gvc_rank) %>% writexl::write_xlsx("gvc_genes_sorted_by_gvc_rank.xlsx")
+```
+
+Download the table above as an Excel spreadsheet [here](gvc_genes_sorted_by_gvc_rank.xlsx).
+
 ## Correlation between GVC, Agora and OpenTargets scores
 
 ### GVC vs Agora
