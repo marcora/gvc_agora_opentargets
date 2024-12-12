@@ -1,5 +1,7 @@
 ---
 title: "gvc_agora_opentargets"
+author: "Edoardo \"Dado\" Marcora"
+date: 2024-12-12
 format:
   html:
     df-print: paged
