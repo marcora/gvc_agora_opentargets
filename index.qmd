@@ -111,6 +111,8 @@ ago
 
 ### OpenTargets genes
 
+#### Alzheimer's disease
+
 Alzheimer's disease gene prioritization scores from [OpenTargets](https://platform.opentargets.org/disease/MONDO_0004975/associations):
 
 ```{r}
@@ -138,10 +140,63 @@ otensg <- gconvert(
 otensg
 ```
 
+#### Parkinson's disease
+
+Parkinson's disease gene prioritization scores from [OpenTargets](https://platform.opentargets.org/disease/MONDO_0005180/associations):
+
+```{r}
+ot.pd <- read_tsv("OT-MONDO_0005180-associated-targets-1_9_2025-v24_09.tsv", show_col_types = FALSE, na = "No data")
+
+ot.pd
+```
+
+Add Ensembl Gene IDs (WTF!):
+
+```{r}
+otcols.pd <- colnames(ot.pd)
+otensg.pd <- gconvert(
+  query = ot.pd$symbol,
+  organism = "hsapiens",
+  target= "ENSG",
+  mthreshold = Inf,
+  filter_na = TRUE) %>% 
+  mutate(input_number = as.character(input_number)) %>%
+  left_join(ot.pd %>% rownames_to_column(var = "input_number"), by = "input_number") %>% 
+  select(ensembl_gene_id = target, otcols.pd)
+
+otensg.pd
+```
+
+#### Myocardial infarction
+
+Myocardial infarction gene prioritization scores from [OpenTargets](https://platform.opentargets.org/disease/EFO_0000612/associations):
+
+```{r}
+ot.mi <- read_tsv("OT-EFO_0000612-associated-targets-1_9_2025-v24_09.tsv", show_col_types = FALSE, na = "No data")
+
+ot.mi
+```
+
+Add Ensembl Gene IDs (WTF!):
+
+```{r}
+otcols.mi <- colnames(ot.mi)
+otensg.mi <- gconvert(
+  query = ot.mi$symbol,
+  organism = "hsapiens",
+  target= "ENSG",
+  mthreshold = Inf,
+  filter_na = TRUE) %>% 
+  mutate(input_number = as.character(input_number)) %>%
+  left_join(ot.mi %>% rownames_to_column(var = "input_number"), by = "input_number") %>% 
+  select(ensembl_gene_id = target, otcols.mi)
+
+otensg.mi
+```
+
 ### All protein coding genes in the human genome
 
 ```{r}
-#| cache: true
 gencode <-
   data.frame(rtracklayer::import("gencode.v47.basic.annotation.gtf.gz")) %>%
   distinct(gene_id, .keep_all = TRUE) %>%
@@ -199,7 +254,7 @@ genes
 ```
 
 ```{r}
-#| cache: true
+
 query <- genes %>% distinct(ensembl_gene_id) %>% pull(ensembl_gene_id)
 
 gostres <- gost(
@@ -241,7 +296,7 @@ genes
 ```
 
 ```{r}
-#| cache: true
+
 query <- genes %>% distinct(ensembl_gene_id) %>% pull(ensembl_gene_id)
 
 gostres <- gost(
@@ -278,7 +333,7 @@ genes
 ```
 
 ```{r}
-#| cache: true
+
 query <- genes %>% distinct(ensembl_gene_id) %>% pull(ensembl_gene_id)
 
 gostres <- gost(
@@ -315,7 +370,7 @@ genes
 ```
 
 ```{r}
-#| cache: true
+
 query <- genes %>% distinct(ensembl_gene_id) %>% pull(ensembl_gene_id)
 
 gostres <- gost(
@@ -352,7 +407,7 @@ genes
 ```
 
 ```{r}
-#| cache: true
+
 query <- genes %>% distinct(ensembl_gene_id) %>% pull(ensembl_gene_id)
 
 gostres <- gost(
@@ -389,7 +444,7 @@ genes
 ```
 
 ```{r}
-#| cache: true
+
 query <- genes %>% distinct(ensembl_gene_id) %>% pull(ensembl_gene_id)
 
 gostres <- gost(
@@ -426,7 +481,7 @@ genes
 ```
 
 ```{r}
-#| cache: true
+
 query <- genes %>% distinct(ensembl_gene_id) %>% pull(ensembl_gene_id)
 
 gostres <- gost(
@@ -463,7 +518,7 @@ genes
 ```
 
 ```{r}
-#| cache: true
+
 query <- genes %>% distinct(ensembl_gene_id) %>% pull(ensembl_gene_id)
 
 gostres <- gost(
@@ -500,7 +555,7 @@ genes
 ```
 
 ```{r}
-#| cache: true
+
 query <- genes %>% distinct(ensembl_gene_id) %>% pull(ensembl_gene_id)
 
 gostres <- gost(
@@ -537,7 +592,7 @@ genes
 ```
 
 ```{r}
-#| cache: true
+
 query <- genes %>% distinct(ensembl_gene_id) %>% pull(ensembl_gene_id)
 
 gostres <- gost(
@@ -574,7 +629,7 @@ genes
 ```
 
 ```{r}
-#| cache: true
+
 query <- genes %>% distinct(ensembl_gene_id) %>% pull(ensembl_gene_id)
 
 gostres <- gost(
@@ -609,7 +664,7 @@ d0
 ```
 
 ```{r}
-#| cache: true
+
 query <- d0 %>% distinct(ensembl_gene_id) %>% pull(ensembl_gene_id)
 
 gostres <- gost(
@@ -645,7 +700,7 @@ d0.minus_apoe_hla
 ```
 
 ```{r}
-#| cache: true
+
 query <- d0.minus_apoe_hla %>% distinct(ensembl_gene_id) %>% pull(ensembl_gene_id)
 
 gostres <- gost(
@@ -681,7 +736,7 @@ d0.minus_apoe_hla.200kb
 ```
 
 ```{r}
-#| cache: true
+
 query <- d0.minus_apoe_hla.200kb %>% distinct(ensembl_gene_id) %>% pull(ensembl_gene_id)
 
 gostres <- gost(
@@ -717,7 +772,7 @@ d0.minus_apoe_hla.20kb
 ```
 
 ```{r}
-#| cache: true
+
 query <- d0.minus_apoe_hla.20kb %>% distinct(ensembl_gene_id) %>% pull(ensembl_gene_id)
 
 gostres <- gost(
@@ -753,17 +808,8 @@ d0.minus_apoe_hla
 ```
 
 ```{r}
-#| cache: true
-query <- d0.minus_apoe_hla %>% distinct(ensembl_gene_id, .keep_all = TRUE)
 
-# write gorilla and enrichmentmap query files
-gencode %>%
-  left_join(query, by = "ensembl_gene_id") %>%
-  arrange(absolute_distance) %>%
-  distinct(gene_name) %>%
-  write_tsv("gorilla/gvc.genes.minus_apoe_hla.absolute_distance.query.txt", col_names = FALSE)
-
-query <- query %>% pull(ensembl_gene_id)
+query <- d0.minus_apoe_hla %>% distinct(ensembl_gene_id, .keep_all = TRUE) %>% pull(ensembl_gene_id)
 
 writeLines(query, "enrichmentmap/gvc.genes.minus_apoe_hla.absolute_distance.query.txt")
 
@@ -820,7 +866,7 @@ d1
 ```
 
 ```{r}
-#| cache: true
+
 query <- d1 %>% distinct(ensembl_gene_id) %>% pull(ensembl_gene_id)
 
 gostres <- gost(
@@ -862,7 +908,7 @@ d2
 ```
 
 ```{r}
-#| cache: true
+
 query <- d2 %>% distinct(ensembl_gene_id) %>% pull(ensembl_gene_id)
 
 gostres <- gost(
@@ -904,7 +950,7 @@ d3
 ```
 
 ```{r}
-#| cache: true
+
 query <- d3 %>% distinct(ensembl_gene_id) %>% pull(ensembl_gene_id)
 
 gostres <- gost(
@@ -946,7 +992,7 @@ d4
 ```
 
 ```{r}
-#| cache: true
+
 query <- d4 %>% distinct(ensembl_gene_id) %>% pull(ensembl_gene_id)
 
 gostres <- gost(
@@ -983,8 +1029,11 @@ d5
 ```
 
 ```{r}
-#| cache: true
 query <- d5 %>% distinct(ensembl_gene_id) %>% pull(ensembl_gene_id)
+
+writeLines(query, "enrichmentmap/agora.genes.genetics_score.query.txt")
+
+multiquery <- c(multiquery, "> agora.genes.genetics_score", query)
 
 gostres <- gost(
   query = query,
@@ -1018,8 +1067,12 @@ d6
 ```
 
 ```{r}
-#| cache: true
+
 query <- d6 %>% distinct(ensembl_gene_id) %>% pull(ensembl_gene_id)
+
+writeLines(query, "enrichmentmap/agora.genes.multi_omics_score.query.txt")
+
+multiquery <- c(multiquery, "> agora.genes.multi_omics_score", query)
 
 gostres <- gost(
   query = query,
@@ -1053,17 +1106,8 @@ d7
 ```
 
 ```{r}
-#| cache: true
-query <- d7 %>% distinct(ensembl_gene_id, .keep_all = TRUE)
 
-# write gorilla and enrichmentmap query files
-gencode %>%
-  left_join(query, by = "ensembl_gene_id") %>%
-  arrange(desc(target_risk_score)) %>%
-  distinct(gene_name) %>%
-  write_tsv("gorilla/agora.genes.target_risk_score.query.txt", col_names = FALSE)
-
-query <- query %>% pull(ensembl_gene_id)
+query <- d7 %>% distinct(ensembl_gene_id, .keep_all = TRUE) %>% pull(ensembl_gene_id)
 
 writeLines(query, "enrichmentmap/agora.genes.target_risk_score.query.txt")
 
@@ -1116,7 +1160,7 @@ d8
 ```
 
 ```{r}
-#| cache: true
+
 query <- d8 %>% distinct(ensembl_gene_id) %>% pull(ensembl_gene_id)
 
 gostres <- gost(
@@ -1151,17 +1195,8 @@ d9
 ```
 
 ```{r}
-#| cache: true
-query <- d9 %>% distinct(ensembl_gene_id, .keep_all = TRUE)
 
-# write gorilla and enrichmentmap query files
-gencode %>%
-  left_join(query, by = "ensembl_gene_id") %>%
-  arrange(desc(globalScore)) %>%
-  distinct(gene_name) %>%
-  write_tsv("gorilla/opentargets.genes.global_score.query.txt", col_names = FALSE)
-
-query <- query %>% pull(ensembl_gene_id)
+query <- d9 %>% distinct(ensembl_gene_id, .keep_all = TRUE) %>% pull(ensembl_gene_id)
 
 writeLines(query, "enrichmentmap/opentargets.genes.global_score.query.txt")
 
@@ -1212,7 +1247,7 @@ d10 <- read_xlsx("2024-08-29_GVC Table 1C - WORKING COPY.xlsx", sheet = "PG Gene
 ```
 
 ```{r}
-#| cache: true
+
 query <-
   d10 %>%
   rename(gene = `GVC expanded list of possible genes (500kb)`) %>%
