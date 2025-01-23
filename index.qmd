@@ -675,7 +675,7 @@ gostres <- gost(
   ordered_query = FALSE, # <- UNORDERED QUERY!
   significant = TRUE,
   user_threshold = 0.005,
-  sources = c("GO:BP", "KEGG", "REAC"),
+  sources = c("GO:BP", "KEGG", "REAC", "WP", "HP"),
   correction_method = "gSCS")
 
 gostres$result %>%
@@ -711,7 +711,7 @@ gostres <- gost(
   ordered_query = FALSE, # <- UNORDERED QUERY!
   significant = TRUE,
   user_threshold = 0.005,
-  sources = c("GO:BP", "KEGG", "REAC"),
+  sources = c("GO:BP", "KEGG", "REAC", "WP", "HP"),
   correction_method = "gSCS")
 
 gostres$result %>%
@@ -747,7 +747,7 @@ gostres <- gost(
   ordered_query = FALSE, # <- UNORDERED QUERY!
   significant = TRUE,
   user_threshold = 0.005,
-  sources = c("GO:BP", "KEGG", "REAC"),
+  sources = c("GO:BP", "KEGG", "REAC", "WP", "HP"),
   correction_method = "gSCS")
 
 gostres$result %>%
@@ -783,7 +783,7 @@ gostres <- gost(
   ordered_query = FALSE, # <- UNORDERED QUERY!
   significant = TRUE,
   user_threshold = 0.005,
-  sources = c("GO:BP", "KEGG", "REAC"),
+  sources = c("GO:BP", "KEGG", "REAC", "WP", "HP"),
   correction_method = "gSCS")
 
 gostres$result %>%
@@ -823,7 +823,7 @@ gostres <- gost(
   ordered_query = TRUE, # <- ORDERED QUERY!
   significant = TRUE,
   user_threshold = 0.005,
-  sources = c("GO:BP", "KEGG", "REAC"),
+  sources = c("GO:BP", "KEGG", "REAC", "WP", "HP"),
   correction_method = "gSCS")
 
 gostres$result %>%
@@ -877,7 +877,7 @@ gostres <- gost(
   ordered_query = TRUE,
   significant = TRUE,
   user_threshold = 0.005,
-  sources = c("GO:BP", "KEGG", "REAC"),
+  sources = c("GO:BP", "KEGG", "REAC", "WP", "HP"),
   correction_method = "gSCS")
 
 gostres$result %>%
@@ -919,7 +919,7 @@ gostres <- gost(
   ordered_query = TRUE,
   significant = TRUE,
   user_threshold = 0.005,
-  sources = c("GO:BP", "KEGG", "REAC"),
+  sources = c("GO:BP", "KEGG", "REAC", "WP", "HP"),
   correction_method = "gSCS")
 
 gostres$result %>%
@@ -961,7 +961,7 @@ gostres <- gost(
   ordered_query = TRUE,
   significant = TRUE,
   user_threshold = 0.005,
-  sources = c("GO:BP", "KEGG", "REAC"),
+  sources = c("GO:BP", "KEGG", "REAC", "WP", "HP"),
   correction_method = "gSCS")
 
 gostres$result %>%
@@ -1003,7 +1003,7 @@ gostres <- gost(
   ordered_query = TRUE,
   significant = TRUE,
   user_threshold = 0.005,
-  sources = c("GO:BP", "KEGG", "REAC"),
+  sources = c("GO:BP", "KEGG", "REAC", "WP", "HP"),
   correction_method = "gSCS")
 
 gostres$result %>%
@@ -1043,7 +1043,7 @@ gostres <- gost(
   ordered_query = TRUE,
   significant = TRUE,
   user_threshold = 0.005,
-  sources = c("GO:BP", "KEGG", "REAC"),
+  sources = c("GO:BP", "KEGG", "REAC", "WP", "HP"),
   correction_method = "gSCS")
 
 gostres$result %>%
@@ -1082,7 +1082,7 @@ gostres <- gost(
   ordered_query = TRUE,
   significant = TRUE,
   user_threshold = 0.005,
-  sources = c("GO:BP", "KEGG", "REAC"),
+  sources = c("GO:BP", "KEGG", "REAC", "WP", "HP"),
   correction_method = "gSCS")
 
 gostres$result %>%
@@ -1121,7 +1121,7 @@ gostres <- gost(
   ordered_query = TRUE,
   significant = TRUE,
   user_threshold = 0.005,
-  sources = c("GO:BP", "KEGG", "REAC"),
+  sources = c("GO:BP", "KEGG", "REAC", "WP", "HP"),
   correction_method = "gSCS")
 
 gostres$result %>%
@@ -1148,7 +1148,9 @@ read_tsv("gorilla/opentargets.genes.global_score.gorilla.tsv", show_col_types = 
 
 ## ORA of OpenTargets genes
 
-### OpenTargets genes sorted by `otGeneticsPortal`
+### Alzheimer's disease
+
+#### OpenTargets genes sorted by `otGeneticsPortal`
 
 ```{r}
 d8 <- otensg %>%
@@ -1160,8 +1162,11 @@ d8
 ```
 
 ```{r}
+query <- d8 %>% distinct(ensembl_gene_id, .keep_all = TRUE) %>% pull(ensembl_gene_id)
 
-query <- d8 %>% distinct(ensembl_gene_id) %>% pull(ensembl_gene_id)
+writeLines(query, "enrichmentmap/opentargets.genes.genetics_score.query.txt")
+
+multiquery <- c(multiquery, "> opentargets.genes.genetics_score", query)
 
 gostres <- gost(
   query = query,
@@ -1171,7 +1176,7 @@ gostres <- gost(
   ordered_query = TRUE,
   significant = TRUE,
   user_threshold = 0.005,
-  sources = c("GO:BP", "KEGG", "REAC"),
+  sources = c("GO:BP", "KEGG", "REAC", "WP", "HP"),
   correction_method = "gSCS")
 
 gostres$result %>%
@@ -1183,7 +1188,7 @@ gostres$result %>%
 gostplot(gostres, capped = FALSE, interactive = TRUE)
 ```
 
-### OpenTargets genes sorted by `globalScore`
+#### OpenTargets genes sorted by `globalScore`
 
 ```{r}
 d9 <- otensg %>%
@@ -1210,7 +1215,7 @@ gostres <- gost(
   ordered_query = TRUE,
   significant = TRUE,
   user_threshold = 0.005,
-  sources = c("GO:BP", "KEGG", "REAC"),
+  sources = c("GO:BP", "KEGG", "REAC", "WP", "HP"),
   correction_method = "gSCS")
 
 gostres$result %>%
@@ -1233,6 +1238,166 @@ Perform alternative ORA of GO:CP using [GOrilla](https://cbl-gorilla.cs.technion
 ```{r}
 read_tsv("gorilla/agora.genes.target_risk_score.gorilla.tsv", show_col_types = FALSE) %>% select(Description, everything())
 ```
+
+
+### Parkinson's disease
+
+#### OpenTargets genes sorted by `otGeneticsPortal`
+
+```{r}
+d8.pd <- otensg.pd %>%
+  drop_na(otGeneticsPortal) %>%
+  sample_frac(1L) %>% # randomize row order before arranging
+  arrange(desc(otGeneticsPortal))
+
+d8.pd
+```
+
+```{r}
+query <- d8.pd %>% distinct(ensembl_gene_id, .keep_all = TRUE) %>% pull(ensembl_gene_id)
+
+writeLines(query, "enrichmentmap/opentargets.pd.genes.genetics_score.query.txt")
+
+multiquery <- c(multiquery, "> opentargets.pd.genes.genetics_score", query)
+
+gostres <- gost(
+  query = query,
+  organism = "hsapiens",
+  domain_scope = "annotated",
+  exclude_iea = TRUE,
+  ordered_query = TRUE,
+  significant = TRUE,
+  user_threshold = 0.005,
+  sources = c("GO:BP", "KEGG", "REAC", "WP", "HP"),
+  correction_method = "gSCS")
+
+gostres$result %>%
+  select(term_name, term_id, source, everything()) %>%
+  filter(term_size >= 5, term_size <= 350, intersection_size >= 3)
+```
+
+```{r}
+gostplot(gostres, capped = FALSE, interactive = TRUE)
+```
+
+#### OpenTargets genes sorted by `globalScore`
+
+```{r}
+d9.pd <- otensg.pd %>%
+  drop_na(globalScore) %>%
+  sample_frac(1L) %>% # randomize row order before arranging
+  arrange(desc(globalScore))
+
+d9.pd
+```
+
+```{r}
+
+query <- d9.pd %>% distinct(ensembl_gene_id, .keep_all = TRUE) %>% pull(ensembl_gene_id)
+
+writeLines(query, "enrichmentmap/opentargets.pd.genes.global_score.query.txt")
+
+multiquery <- c(multiquery, "> opentargets.pd.genes.global_score", query)
+
+gostres <- gost(
+  query = query,
+  organism = "hsapiens",
+  domain_scope = "annotated",
+  exclude_iea = TRUE,
+  ordered_query = TRUE,
+  significant = TRUE,
+  user_threshold = 0.005,
+  sources = c("GO:BP", "KEGG", "REAC", "WP", "HP"),
+  correction_method = "gSCS")
+
+gostres$result %>%
+  select(term_name, term_id, source, everything()) %>%
+  filter(term_size >= 5, term_size <= 350, intersection_size >= 3)
+```
+
+```{r}
+gostplot(gostres, capped = FALSE, interactive = TRUE)
+```
+
+### Myocardial infarction
+
+#### OpenTargets genes sorted by `otGeneticsPortal`
+
+```{r}
+d8.mi <- otensg.mi %>%
+  drop_na(otGeneticsPortal) %>%
+  sample_frac(1L) %>% # randomize row order before arranging
+  arrange(desc(otGeneticsPortal))
+
+d8.mi
+```
+
+```{r}
+query <- d8.mi %>% distinct(ensembl_gene_id, .keep_all = TRUE) %>% pull(ensembl_gene_id)
+
+writeLines(query, "enrichmentmap/opentargets.mi.genes.genetics_score.query.txt")
+
+multiquery <- c(multiquery, "> opentargets.mi.genes.genetics_score", query)
+
+gostres <- gost(
+  query = query,
+  organism = "hsapiens",
+  domain_scope = "annotated",
+  exclude_iea = TRUE,
+  ordered_query = TRUE,
+  significant = TRUE,
+  user_threshold = 0.005,
+  sources = c("GO:BP", "KEGG", "REAC", "WP", "HP"),
+  correction_method = "gSCS")
+
+gostres$result %>%
+  select(term_name, term_id, source, everything()) %>%
+  filter(term_size >= 5, term_size <= 350, intersection_size >= 3)
+```
+
+```{r}
+gostplot(gostres, capped = FALSE, interactive = TRUE)
+```
+
+#### OpenTargets genes sorted by `globalScore`
+
+```{r}
+d9.mi <- otensg.mi %>%
+  drop_na(globalScore) %>%
+  sample_frac(1L) %>% # randomize row order before arranging
+  arrange(desc(globalScore))
+
+d9.mi
+```
+
+```{r}
+
+query <- d9.mi %>% distinct(ensembl_gene_id, .keep_all = TRUE) %>% pull(ensembl_gene_id)
+
+writeLines(query, "enrichmentmap/opentargets.mi.genes.global_score.query.txt")
+
+multiquery <- c(multiquery, "> opentargets.mi.genes.global_score", query)
+
+gostres <- gost(
+  query = query,
+  organism = "hsapiens",
+  domain_scope = "annotated",
+  exclude_iea = TRUE,
+  ordered_query = TRUE,
+  significant = TRUE,
+  user_threshold = 0.005,
+  sources = c("GO:BP", "KEGG", "REAC", "WP", "HP"),
+  correction_method = "gSCS")
+
+gostres$result %>%
+  select(term_name, term_id, source, everything()) %>%
+  filter(term_size >= 5, term_size <= 350, intersection_size >= 3)
+```
+
+```{r}
+gostplot(gostres, capped = FALSE, interactive = TRUE)
+```
+
 
 ## Write multiquery to file for later use in `enrichmentmap`
 
@@ -1263,7 +1428,7 @@ gostres <- gost(
   ordered_query = FALSE, # <- UNORDERED QUERY!
   significant = TRUE,
   user_threshold = 0.005,
-  sources = c("GO:BP", "KEGG", "REAC"),
+  sources = c("GO:BP", "KEGG", "REAC", "WP", "HP"),
   correction_method = "gSCS")
 
 gostres$result %>%
