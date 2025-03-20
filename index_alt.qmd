@@ -1,0 +1,812 @@
+---
+title: "gvc_agora_opentargets"
+author: "Edoardo \"Dado\" Marcora"
+date: 2024-12-12
+format:
+  html:
+    df-print: paged
+    toc: true
+execute: 
+  warning: false
+---
+
+## Setup environment
+
+```{r}
+#| output: false
+library(tidyverse)
+library(ggformula)
+library(janitor)
+library(broom)
+library(readxl)
+library(jsonlite)
+
+library(gprofiler2)
+
+library(mclust)
+
+theme_set(theme_bw())
+
+set.seed(666)
+```
+
+## Read and prep data
+
+### GVC genes (within 1Mb flanking regions of GVC loci) \[OLD\]
+
+```{r}
+gvc <-
+  read_xlsx("GVC_1Mb_comparison_050224.xlsx") %>%
+  clean_names() %>% 
+  separate(gene_id, c("ensembl_gene_id", "version")) %>%
+  select(-version, -agora_nominated_list, -opentarget_info)
+
+gvc
+```
+
+```{r}
+gvc.genes <-
+  gvc %>%
+  arrange(absolute_distance) %>%
+  distinct(ensembl_gene_id, .keep_all = TRUE) %>%
+  select(ensembl_gene_id, gene_symbol, absolute_distance) %>%
+  arrange(gene_symbol)
+
+gvc.genes
+```
+
+```{r}
+gvc.genes %>% distinct(gene_symbol) %>% nrow()
+```
+
+### GVC genes (within 1Mb flanking regions of GVC loci) minus APOE and HLA loci genes
+
+Remove genes in APOE and HLA loci and manually add APOE and HLA genes (based on Bellenguez2022):
+
+```{r}
+gvc.genes.apoe_hla <- gvc.genes %>% filter(ensembl_gene_id %in% c("ENSG00000130203", "ENSG00000196735", "ENSG00000179344", "ENSG00000196126"))
+
+gvc.genes.apoe_hla
+```
+
+```{r}
+gvc.minus_apoe_hla <- gvc %>% filter(grouped_loci_gvc != "APOE / TOMM40" & grouped_loci_gvc != "HLA")
+
+gvc.minus_apoe_hla
+```
+
+```{r}
+gvc.genes.minus_apoe_hla <-
+  gvc.minus_apoe_hla %>%
+  arrange(absolute_distance) %>%
+  distinct(ensembl_gene_id, .keep_all = TRUE) %>%
+  select(ensembl_gene_id, gene_symbol, absolute_distance) %>%
+  bind_rows(gvc.genes.apoe_hla) %>%
+  arrange(gene_symbol)
+
+gvc.genes.minus_apoe_hla
+```
+
+### Agora genes
+
+Alzheimer's disease gene prioritization scores from [Agora](https://www.synapse.org/Synapse:syn25741025) (see also related [journal article](https://alz-journals.onlinelibrary.wiley.com/doi/10.1002/trc2.12461)):
+
+```{r}
+ago1 <- read_json("agora.syn25741025.overall_scores.v12.2024-10-24.json", simplifyVector = TRUE) %>% as_tibble()
+
+ago1
+```
+
+Alzheimer's disease genes (Agora nominated targets):
+
+https://agora.adknowledgeportal.org/genes/nominated-targets
+
+```{r}
+ago2 <- read_csv("agora.nominated-targets.gene-list.2024-10-24.csv")
+ago2
+```
+
+```{r}
+ago <- ago1 # %>% filter(hgnc_symbol %in% ago2$`Gene Symbol`)
+
+ago
+```
+
+#### Genetics score
+
+```{r}
+ago %>%
+  drop_na(genetics_score) %>%
+  gf_density(~ genetics_score, fill = "red", bins = 20) %>% gf_labs(title = "Agora genetics_score")
+```
+
+```{r}
+gmm_fit <- Mclust(ago %>% drop_na(genetics_score) %>% pull(genetics_score), G = 1:6)  # 1 to 6 components
+gmm_fit$parameters$mean
+sqrt(gmm_fit$parameters$variance$sigmasq)
+```
+
+#### Multi-omics score
+
+```{r}
+ago %>% drop_na(multi_omics_score) %>% gf_density(~ multi_omics_score, fill = "green", bins = 20) %>% gf_labs(title = "Agora multi_omics_score")
+```
+
+```{r}
+gmm_fit <- Mclust(ago %>% drop_na(multi_omics_score) %>% pull(multi_omics_score), G = 1:6)  # 1 to 6 components
+gmm_fit$parameters$mean
+sqrt(gmm_fit$parameters$variance$sigmasq)
+```
+
+#### Target risk score
+
+```{r}
+ago %>% drop_na(target_risk_score) %>% gf_density(~ target_risk_score, fill = "blue", bins = 20) %>% gf_labs(title = "Agora target_risk_score")
+```
+
+```{r}
+gmm_fit <- Mclust(ago %>% drop_na(target_risk_score) %>% pull(target_risk_score), G = 1:6)  # 1 to 6 components
+gmm_fit$parameters$mean
+sqrt(gmm_fit$parameters$variance$sigmasq)
+```
+
+### OpenTargets genes
+
+#### Alzheimer's disease
+
+Alzheimer's disease gene prioritization scores from [OpenTargets](https://platform.opentargets.org/disease/MONDO_0004975/associations):
+
+```{r}
+ot <- read_tsv("OT-MONDO_0004975-associated-targets-6_4_2024-v24_03.tsv", show_col_types = FALSE, na = "No data")
+
+# ot <- read_tsv("OT-MONDO_0004975-associated-targets-10_24_2024-v24_09.tsv", show_col_types = FALSE, na = "No data")
+
+ot
+```
+
+Add Ensembl Gene IDs (WTF!):
+
+```{r}
+otcols <- colnames(ot)
+otensg <- gconvert(
+  query = ot$symbol,
+  organism = "hsapiens",
+  target= "ENSG",
+  mthreshold = Inf,
+  filter_na = TRUE) %>% 
+  mutate(input_number = as.character(input_number)) %>%
+  left_join(ot %>% rownames_to_column(var = "input_number"), by = "input_number") %>% 
+  select(ensembl_gene_id = target, otcols)
+
+otensg
+```
+
+#### Parkinson's disease
+
+Parkinson's disease gene prioritization scores from [OpenTargets](https://platform.opentargets.org/disease/MONDO_0005180/associations):
+
+```{r}
+ot.pd <- read_tsv("OT-MONDO_0005180-associated-targets-1_9_2025-v24_09.tsv", show_col_types = FALSE, na = "No data")
+
+ot.pd
+```
+
+Add Ensembl Gene IDs (WTF!):
+
+```{r}
+otcols.pd <- colnames(ot.pd)
+otensg.pd <- gconvert(
+  query = ot.pd$symbol,
+  organism = "hsapiens",
+  target= "ENSG",
+  mthreshold = Inf,
+  filter_na = TRUE) %>% 
+  mutate(input_number = as.character(input_number)) %>%
+  left_join(ot.pd %>% rownames_to_column(var = "input_number"), by = "input_number") %>% 
+  select(ensembl_gene_id = target, otcols.pd)
+
+otensg.pd
+```
+
+#### Myocardial infarction
+
+Myocardial infarction gene prioritization scores from [OpenTargets](https://platform.opentargets.org/disease/EFO_0000612/associations):
+
+```{r}
+ot.mi <- read_tsv("OT-EFO_0000612-associated-targets-1_9_2025-v24_09.tsv", show_col_types = FALSE, na = "No data")
+
+ot.mi
+```
+
+Add Ensembl Gene IDs (WTF!):
+
+```{r}
+otcols.mi <- colnames(ot.mi)
+otensg.mi <- gconvert(
+  query = ot.mi$symbol,
+  organism = "hsapiens",
+  target= "ENSG",
+  mthreshold = Inf,
+  filter_na = TRUE) %>% 
+  mutate(input_number = as.character(input_number)) %>%
+  left_join(ot.mi %>% rownames_to_column(var = "input_number"), by = "input_number") %>% 
+  select(ensembl_gene_id = target, otcols.mi)
+
+otensg.mi
+```
+
+### All protein coding genes in the human genome
+
+```{r}
+gencode <-
+  data.frame(rtracklayer::import("gencode.v47.basic.annotation.gtf.gz")) %>%
+  distinct(gene_id, .keep_all = TRUE) %>%
+  filter(gene_type == "protein_coding") %>%
+  mutate(ensembl_gene_id = str_remove(gene_id, pattern = "\\.\\d+$")) %>%
+  select(ensembl_gene_id, gene_name) %>%
+  slice_sample(n = nrow(.), replace = FALSE) # permute rows
+
+gencode %>% write_tsv("alt/gorilla/gencode.v47.basic.annotation.genes.protein_coding.tsv")
+```
+
+## ORA of GVC genes
+
+### GVC genes (within 1Mb flanking regions of GVC loci)
+
+::: callout-important
+unordered query
+:::
+
+```{r}
+d0 <- gvc.genes %>% select(ensembl_gene_id, gene_symbol)
+
+d0
+```
+
+```{r}
+
+query <- d0 %>% distinct(ensembl_gene_id) %>% pull(ensembl_gene_id)
+
+gostres <- gost(
+  query = query,
+  organism = "hsapiens",
+  domain_scope = "annotated",
+  exclude_iea = TRUE,
+  ordered_query = FALSE, # <- UNORDERED QUERY!
+  significant = TRUE,
+  user_threshold = 0.005,
+  sources = c("GO:BP", "KEGG", "REAC", "WP", "HP"),
+  correction_method = "gSCS")
+
+gostres$result %>%
+  select(term_name, term_id, source, everything()) %>%
+  filter(term_size >= 5, term_size <= 350, intersection_size >= 3)
+```
+
+```{r}
+gostplot(gostres, capped = FALSE, interactive = TRUE)
+```
+
+### GVC genes (within 1Mb flanking regions of GVC loci) minus APOE and HLA loci genes
+
+::: callout-important
+unordered query
+:::
+
+```{r}
+d0.minus_apoe_hla <- gvc.genes.minus_apoe_hla %>% select(ensembl_gene_id, gene_symbol)
+
+d0.minus_apoe_hla
+```
+
+```{r}
+
+query <- d0.minus_apoe_hla %>% distinct(ensembl_gene_id) %>% pull(ensembl_gene_id)
+
+gostres <- gost(
+  query = query,
+  organism = "hsapiens",
+  domain_scope = "annotated",
+  exclude_iea = TRUE,
+  ordered_query = FALSE, # <- UNORDERED QUERY!
+  significant = TRUE,
+  user_threshold = 0.005,
+  sources = c("GO:BP", "KEGG", "REAC", "WP", "HP"),
+  correction_method = "gSCS")
+
+gostres$result %>%
+  select(term_name, term_id, source, everything()) %>%
+  filter(term_size >= 5, term_size <= 350, intersection_size >= 3)
+```
+
+```{r}
+gostplot(gostres, capped = FALSE, interactive = TRUE)
+```
+
+### GVC genes (within 200Kb flanking regions of GVC loci) minus APOE and HLA loci genes
+
+::: callout-important
+unordered query
+:::
+
+```{r}
+d0.minus_apoe_hla.200kb <- gvc.genes.minus_apoe_hla %>% filter(absolute_distance <= 200000) %>% select(ensembl_gene_id, gene_symbol)
+
+d0.minus_apoe_hla.200kb
+```
+
+```{r}
+
+query <- d0.minus_apoe_hla.200kb %>% distinct(ensembl_gene_id) %>% pull(ensembl_gene_id)
+
+gostres <- gost(
+  query = query,
+  organism = "hsapiens",
+  domain_scope = "annotated",
+  exclude_iea = TRUE,
+  ordered_query = FALSE, # <- UNORDERED QUERY!
+  significant = TRUE,
+  user_threshold = 0.005,
+  sources = c("GO:BP", "KEGG", "REAC", "WP", "HP"),
+  correction_method = "gSCS")
+
+gostres$result %>%
+  select(term_name, term_id, source, everything()) %>%
+  filter(term_size >= 5, term_size <= 350, intersection_size >= 3)
+```
+
+```{r}
+gostplot(gostres, capped = FALSE, interactive = TRUE)
+```
+
+### GVC genes (within 20Kb flanking regions of GVC loci) minus APOE and HLA loci genes
+
+::: callout-important
+unordered query
+:::
+
+```{r}
+d0.minus_apoe_hla.20kb <- gvc.genes.minus_apoe_hla %>% filter(absolute_distance <= 20000) %>% select(ensembl_gene_id, gene_symbol)
+
+d0.minus_apoe_hla.20kb
+```
+
+```{r}
+
+query <- d0.minus_apoe_hla.20kb %>% distinct(ensembl_gene_id) %>% pull(ensembl_gene_id)
+
+gostres <- gost(
+  query = query,
+  organism = "hsapiens",
+  domain_scope = "annotated",
+  exclude_iea = TRUE,
+  ordered_query = FALSE, # <- UNORDERED QUERY!
+  significant = TRUE,
+  user_threshold = 0.005,
+  sources = c("GO:BP", "KEGG", "REAC", "WP", "HP"),
+  correction_method = "gSCS")
+
+gostres$result %>%
+  select(term_name, term_id, source, everything()) %>%
+  filter(term_size >= 5, term_size <= 350, intersection_size >= 3)
+```
+
+```{r}
+gostplot(gostres, capped = FALSE, interactive = TRUE)
+```
+
+### GVC genes (within 1Mb flanking regions of GVC loci) minus APOE and HLA loci genes, ordered by absolute distance from GVC loci
+
+::: callout-important
+query ordered by absolute distance
+:::
+
+```{r}
+d0.minus_apoe_hla <- gvc.genes.minus_apoe_hla %>% arrange(absolute_distance) %>% select(ensembl_gene_id, gene_symbol, absolute_distance)
+
+d0.minus_apoe_hla
+```
+
+```{r}
+
+query <- d0.minus_apoe_hla %>% distinct(ensembl_gene_id, .keep_all = TRUE) %>% pull(ensembl_gene_id)
+
+writeLines(query, "alt/enrichmentmap/gvc.genes.minus_apoe_hla.absolute_distance.query.txt")
+
+multiquery <- c("> gvc.genes.minus_apoe_hla.absolute_distance", query)
+
+gostres <- gost(
+  query = query,
+  organism = "hsapiens",
+  domain_scope = "annotated",
+  exclude_iea = TRUE,
+  ordered_query = TRUE, # <- ORDERED QUERY!
+  significant = TRUE,
+  user_threshold = 0.005,
+  sources = c("GO:BP", "KEGG", "REAC", "WP", "HP"),
+  correction_method = "gSCS")
+
+gostres$result %>%
+  select(term_name, term_id, source, everything()) %>%
+  filter(term_size >= 5, term_size <= 350, intersection_size >= 3)
+```
+
+```{r}
+gostplot(gostres, capped = FALSE, interactive = TRUE)
+```
+
+## ORA of Agora genes
+
+### Agora genes sorted by `genetics_score`
+
+```{r}
+d5 <- ago %>%
+  drop_na(genetics_score) %>%
+  filter(genetics_score >= quantile(genetics_score, 0.90)) %>%
+  sample_frac(1L) %>% # randomize row order before arranging
+  arrange(desc(genetics_score))
+
+d5
+```
+
+```{r}
+query <- d5 %>% distinct(ensembl_gene_id) %>% pull(ensembl_gene_id)
+
+writeLines(query, "alt/enrichmentmap/agora.genes.genetics_score.query.txt")
+
+multiquery <- c(multiquery, "> agora.genes.genetics_score", query)
+
+gostres <- gost(
+  query = query,
+  organism = "hsapiens",
+  domain_scope = "annotated",
+  exclude_iea = TRUE,
+  ordered_query = TRUE,
+  significant = TRUE,
+  user_threshold = 0.005,
+  sources = c("GO:BP", "KEGG", "REAC", "WP", "HP"),
+  correction_method = "gSCS")
+
+gostres$result %>%
+  select(term_name, term_id, source, everything()) %>%
+  filter(term_size >= 5, term_size <= 350, intersection_size >= 3)
+```
+
+```{r}
+gostplot(gostres, capped = FALSE, interactive = TRUE)
+```
+
+### Agora genes sorted by `multi_omics_score`
+
+```{r}
+d6 <- ago %>%
+  drop_na(multi_omics_score) %>%
+  filter(multi_omics_score >= quantile(multi_omics_score, 0.90)) %>%
+  sample_frac(1L) %>% # randomize row order before arranging
+  arrange(desc(multi_omics_score))
+
+d6
+```
+
+```{r}
+
+query <- d6 %>% distinct(ensembl_gene_id) %>% pull(ensembl_gene_id)
+
+writeLines(query, "alt/enrichmentmap/agora.genes.multi_omics_score.query.txt")
+
+multiquery <- c(multiquery, "> agora.genes.multi_omics_score", query)
+
+gostres <- gost(
+  query = query,
+  organism = "hsapiens",
+  domain_scope = "annotated",
+  exclude_iea = TRUE,
+  ordered_query = TRUE,
+  significant = TRUE,
+  user_threshold = 0.005,
+  sources = c("GO:BP", "KEGG", "REAC", "WP", "HP"),
+  correction_method = "gSCS")
+
+gostres$result %>%
+  select(term_name, term_id, source, everything()) %>%
+  filter(term_size >= 5, term_size <= 350, intersection_size >= 3)
+```
+
+```{r}
+gostplot(gostres, capped = FALSE, interactive = TRUE)
+```
+
+### Agora genes sorted by `target_risk_score`
+
+```{r}
+d7 <- ago %>%
+  drop_na(target_risk_score) %>%
+  filter(target_risk_score >= quantile(target_risk_score, 0.90)) %>%
+  sample_frac(1L) %>% # randomize row order before arranging
+  arrange(desc(target_risk_score))
+
+d7
+```
+
+```{r}
+
+query <- d7 %>% distinct(ensembl_gene_id, .keep_all = TRUE) %>% pull(ensembl_gene_id)
+
+writeLines(query, "alt/enrichmentmap/agora.genes.target_risk_score.query.txt")
+
+multiquery <- c(multiquery, "> agora.genes.target_risk_score", query)
+
+gostres <- gost(
+  query = query,
+  organism = "hsapiens",
+  domain_scope = "annotated",
+  exclude_iea = TRUE,
+  ordered_query = TRUE,
+  significant = TRUE,
+  user_threshold = 0.005,
+  sources = c("GO:BP", "KEGG", "REAC", "WP", "HP"),
+  correction_method = "gSCS")
+
+gostres$result %>%
+  select(term_name, term_id, source, everything()) %>%
+  filter(term_size >= 5, term_size <= 350, intersection_size >= 3)
+```
+
+```{r}
+gostplot(gostres, capped = FALSE, interactive = TRUE)
+```
+
+## ORA of OpenTargets genes
+
+### Alzheimer's disease
+
+#### OpenTargets genes sorted by `otGeneticsPortal`
+
+```{r}
+d8 <- otensg %>%
+  drop_na(otGeneticsPortal) %>%
+  sample_frac(1L) %>% # randomize row order before arranging
+  arrange(desc(otGeneticsPortal))
+
+d8
+```
+
+```{r}
+query <- d8 %>% distinct(ensembl_gene_id, .keep_all = TRUE) %>% pull(ensembl_gene_id)
+
+writeLines(query, "alt/enrichmentmap/opentargets.genes.genetics_score.query.txt")
+
+multiquery <- c(multiquery, "> opentargets.genes.genetics_score", query)
+
+gostres <- gost(
+  query = query,
+  organism = "hsapiens",
+  domain_scope = "annotated",
+  exclude_iea = TRUE,
+  ordered_query = TRUE,
+  significant = TRUE,
+  user_threshold = 0.005,
+  sources = c("GO:BP", "KEGG", "REAC", "WP", "HP"),
+  correction_method = "gSCS")
+
+gostres$result %>%
+  select(term_name, term_id, source, everything()) %>%
+  filter(term_size >= 5, term_size <= 350, intersection_size >= 3)
+```
+
+```{r}
+gostplot(gostres, capped = FALSE, interactive = TRUE)
+```
+
+#### OpenTargets genes sorted by `globalScore`
+
+```{r}
+d9 <- otensg %>%
+  drop_na(globalScore) %>%
+  filter(globalScore >= quantile(globalScore, 0.90)) %>%
+  sample_frac(1L) %>% # randomize row order before arranging
+  arrange(desc(globalScore))
+
+d9
+```
+
+```{r}
+
+query <- d9 %>% distinct(ensembl_gene_id, .keep_all = TRUE) %>% pull(ensembl_gene_id)
+
+writeLines(query, "alt/enrichmentmap/opentargets.genes.global_score.query.txt")
+
+multiquery <- c(multiquery, "> opentargets.genes.global_score", query)
+
+gostres <- gost(
+  query = query,
+  organism = "hsapiens",
+  domain_scope = "annotated",
+  exclude_iea = TRUE,
+  ordered_query = TRUE,
+  significant = TRUE,
+  user_threshold = 0.005,
+  sources = c("GO:BP", "KEGG", "REAC", "WP", "HP"),
+  correction_method = "gSCS")
+
+gostres$result %>%
+  select(term_name, term_id, source, everything()) %>%
+  filter(term_size >= 5, term_size <= 350, intersection_size >= 3)
+```
+
+```{r}
+gostplot(gostres, capped = FALSE, interactive = TRUE)
+```
+
+### Parkinson's disease
+
+#### OpenTargets genes sorted by `otGeneticsPortal`
+
+```{r}
+d8.pd <- otensg.pd %>%
+  drop_na(otGeneticsPortal) %>%
+  sample_frac(1L) %>% # randomize row order before arranging
+  arrange(desc(otGeneticsPortal))
+
+d8.pd
+```
+
+```{r}
+query <- d8.pd %>% distinct(ensembl_gene_id, .keep_all = TRUE) %>% pull(ensembl_gene_id)
+
+writeLines(query, "alt/enrichmentmap/opentargets.pd.genes.genetics_score.query.txt")
+
+multiquery <- c(multiquery, "> opentargets.pd.genes.genetics_score", query)
+
+gostres <- gost(
+  query = query,
+  organism = "hsapiens",
+  domain_scope = "annotated",
+  exclude_iea = TRUE,
+  ordered_query = TRUE,
+  significant = TRUE,
+  user_threshold = 0.005,
+  sources = c("GO:BP", "KEGG", "REAC", "WP", "HP"),
+  correction_method = "gSCS")
+
+gostres$result %>%
+  select(term_name, term_id, source, everything()) %>%
+  filter(term_size >= 5, term_size <= 350, intersection_size >= 3)
+```
+
+```{r}
+gostplot(gostres, capped = FALSE, interactive = TRUE)
+```
+
+#### OpenTargets genes sorted by `globalScore`
+
+```{r}
+d9.pd <- otensg.pd %>%
+  drop_na(globalScore) %>%
+  filter(globalScore >= quantile(globalScore, 0.90)) %>%
+  sample_frac(1L) %>% # randomize row order before arranging
+  arrange(desc(globalScore))
+
+d9.pd
+```
+
+```{r}
+
+query <- d9.pd %>% distinct(ensembl_gene_id, .keep_all = TRUE) %>% pull(ensembl_gene_id)
+
+writeLines(query, "alt/enrichmentmap/opentargets.pd.genes.global_score.query.txt")
+
+multiquery <- c(multiquery, "> opentargets.pd.genes.global_score", query)
+
+gostres <- gost(
+  query = query,
+  organism = "hsapiens",
+  domain_scope = "annotated",
+  exclude_iea = TRUE,
+  ordered_query = TRUE,
+  significant = TRUE,
+  user_threshold = 0.005,
+  sources = c("GO:BP", "KEGG", "REAC", "WP", "HP"),
+  correction_method = "gSCS")
+
+gostres$result %>%
+  select(term_name, term_id, source, everything()) %>%
+  filter(term_size >= 5, term_size <= 350, intersection_size >= 3)
+```
+
+```{r}
+gostplot(gostres, capped = FALSE, interactive = TRUE)
+```
+
+### Myocardial infarction
+
+#### OpenTargets genes sorted by `otGeneticsPortal`
+
+```{r}
+d8.mi <- otensg.mi %>%
+  drop_na(otGeneticsPortal) %>%
+  sample_frac(1L) %>% # randomize row order before arranging
+  arrange(desc(otGeneticsPortal))
+
+d8.mi
+```
+
+```{r}
+query <- d8.mi %>% distinct(ensembl_gene_id, .keep_all = TRUE) %>% pull(ensembl_gene_id)
+
+writeLines(query, "alt/enrichmentmap/opentargets.mi.genes.genetics_score.query.txt")
+
+multiquery <- c(multiquery, "> opentargets.mi.genes.genetics_score", query)
+
+gostres <- gost(
+  query = query,
+  organism = "hsapiens",
+  domain_scope = "annotated",
+  exclude_iea = TRUE,
+  ordered_query = TRUE,
+  significant = TRUE,
+  user_threshold = 0.005,
+  sources = c("GO:BP", "KEGG", "REAC", "WP", "HP"),
+  correction_method = "gSCS")
+
+gostres$result %>%
+  select(term_name, term_id, source, everything()) %>%
+  filter(term_size >= 5, term_size <= 350, intersection_size >= 3)
+```
+
+```{r}
+gostplot(gostres, capped = FALSE, interactive = TRUE)
+```
+
+#### OpenTargets genes sorted by `globalScore`
+
+```{r}
+d9.mi <- otensg.mi %>%
+  drop_na(globalScore) %>%
+  filter(globalScore >= quantile(globalScore, 0.90)) %>%
+  sample_frac(1L) %>% # randomize row order before arranging
+  arrange(desc(globalScore))
+
+d9.mi
+```
+
+```{r}
+
+query <- d9.mi %>% distinct(ensembl_gene_id, .keep_all = TRUE) %>% pull(ensembl_gene_id)
+
+writeLines(query, "alt/enrichmentmap/opentargets.mi.genes.global_score.query.txt")
+
+multiquery <- c(multiquery, "> opentargets.mi.genes.global_score", query)
+
+gostres <- gost(
+  query = query,
+  organism = "hsapiens",
+  domain_scope = "annotated",
+  exclude_iea = TRUE,
+  ordered_query = TRUE,
+  significant = TRUE,
+  user_threshold = 0.005,
+  sources = c("GO:BP", "KEGG", "REAC", "WP", "HP"),
+  correction_method = "gSCS")
+
+gostres$result %>%
+  select(term_name, term_id, source, everything()) %>%
+  filter(term_size >= 5, term_size <= 350, intersection_size >= 3)
+```
+
+```{r}
+gostplot(gostres, capped = FALSE, interactive = TRUE)
+```
+
+
+## Write multiquery to file for later use in `enrichmentmap`
+
+```{r}
+writeLines(multiquery, "alt/enrichmentmap/multiquery.txt")
+```
+
+## Print environment
+
+```{r}
+sessioninfo::session_info()
+```
